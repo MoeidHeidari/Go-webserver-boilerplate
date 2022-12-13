@@ -1,22 +1,15 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/dipeshdulal/clean-gin/bootstrap"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
-func testApi(c *gin.Context) {
-
-	c.JSON(200, gin.H{
-		"data": "test api works",
-	})
-
-}
 func main() {
-	engine := gin.New()
-	engine.GET("/test", testApi)
-	err := engine.Run("localhost:4000")
+	_ = godotenv.Load()
+	err := bootstrap.RootApp.Execute()
 	if err != nil {
 		return
 	}
-
 }
