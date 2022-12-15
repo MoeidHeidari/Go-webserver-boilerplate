@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/dipeshdulal/clean-gin/lib"
 	"gorm.io/gorm"
+	"main/lib"
 )
 
 // TestRepository database structure

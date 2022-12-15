@@ -3,9 +3,9 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/dipeshdulal/clean-gin/constants"
-	"github.com/dipeshdulal/clean-gin/lib"
 	"github.com/gin-gonic/gin"
+	"main/constants"
+	"main/lib"
 )
 
 // DatabaseTrx middleware for transactions support for database
@@ -44,7 +44,8 @@ func (m DatabaseTrx) Setup() {
 
 	m.handler.Gin.Use(func(c *gin.Context) {
 		txHandle := m.db.DB.Begin()
-		m.logger.Info("beginning database transaction")
+		m.logger.Info("beginning2 database transaction")
+		m.logger.Info("here")
 
 		defer func() {
 			if r := recover(); r != nil {

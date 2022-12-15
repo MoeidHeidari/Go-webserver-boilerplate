@@ -1,10 +1,10 @@
 package controllers
 
 import (
-	"github.com/dipeshdulal/clean-gin/constants"
-	"github.com/dipeshdulal/clean-gin/lib"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"main/constants"
+	"main/lib"
 	"main/models"
 	"main/services"
 	"net/http"

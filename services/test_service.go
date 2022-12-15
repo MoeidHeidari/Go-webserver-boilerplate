@@ -1,8 +1,8 @@
 package services
 
 import (
-	"github.com/dipeshdulal/clean-gin/lib"
 	"gorm.io/gorm"
+	"main/lib"
 	"main/models"
 	"main/repository"
 )

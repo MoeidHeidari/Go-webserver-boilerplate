@@ -1,13 +1,13 @@
 package bootstrap
 
 import (
-	"github.com/dipeshdulal/clean-gin/api/controllers"
-	"github.com/dipeshdulal/clean-gin/api/middlewares"
-	"github.com/dipeshdulal/clean-gin/api/routes"
-	"github.com/dipeshdulal/clean-gin/lib"
-	"github.com/dipeshdulal/clean-gin/repository"
-	"github.com/dipeshdulal/clean-gin/services"
 	"go.uber.org/fx"
+	"main/api/controllers"
+	"main/api/middlewares"
+	"main/api/routes"
+	"main/lib"
+	"main/repository"
+	"main/services"
 )
 
 var CommonModules = fx.Options(
