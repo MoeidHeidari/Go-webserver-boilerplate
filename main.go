@@ -1,7 +1,15 @@
 package main
 
-import "fmt"
+import (
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
+	"main/bootstrap"
+)
 
 func main() {
-	fmt.Println("hello skyfarm")
+	_ = godotenv.Load()
+	err := bootstrap.RootApp.Execute()
+	if err != nil {
+		return
+	}
 }
