@@ -6,6 +6,7 @@ import "go.uber.org/fx"
 var Module = fx.Options(
 	fx.Provide(NewCorsMiddleware),
 	fx.Provide(NewDatabaseTrx),
+	fx.Provide(NewJWTAuthMiddleware),
 	fx.Provide(NewMiddlewares),
 )
 

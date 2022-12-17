@@ -1,7 +1,7 @@
 mysql:
   image : mysql:5.7
   ports:
-    - "3306:3306"
+    - "3307:3306"
   volumes:
     - ~/db/mysql:/var/lib/mysql
     - ./config.cnf:/etc/mysql/conf.d/config.cnf

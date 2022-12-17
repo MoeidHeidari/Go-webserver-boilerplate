@@ -2,6 +2,7 @@ package routes
 
 import (
 	"main/api/controllers"
+	"main/api/middlewares"
 	"main/lib"
 )
 
@@ -10,12 +11,13 @@ type TestRoutes struct {
 	logger         lib.Logger
 	handler        lib.RequestHandler
 	TestController controllers.TestController
+	authMiddleware middlewares.JWTAuthMiddleware
 }
 
 // Setup Test routes
 func (s TestRoutes) Setup() {
 	s.logger.Info("Setting up routes")
-	api := s.handler.Gin.Group("/api")
+	api := s.handler.Gin.Group("/api").Use(s.authMiddleware.Handler())
 	{
 		api.GET("/test", s.TestController.GetTest)
 		api.GET("/test/:id", s.TestController.GetOneTest)
