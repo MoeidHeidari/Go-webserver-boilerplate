@@ -17,11 +17,11 @@ type TestRoutes struct {
 // Setup Test routes
 func (s TestRoutes) Setup() {
 	s.logger.Info("Setting up routes")
-	api := s.handler.Gin.Group("/api").Use(s.authMiddleware.Handler())
+	api := s.handler.Gin.Group("/api") /*.Use(s.authMiddleware.Handler())*/
 	{
 		api.GET("/test", s.TestController.GetTest)
 		api.GET("/test/:id", s.TestController.GetOneTest)
-		api.POST("/test", s.TestController.SaveTest)
+		api.POST("/test", s.TestController.CreateTest)
 		api.POST("/test/:id", s.TestController.UpdateTest)
 		api.DELETE("/test/:id", s.TestController.DeleteTest)
 	}

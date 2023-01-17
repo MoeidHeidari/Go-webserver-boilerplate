@@ -62,8 +62,8 @@ func (u TestController) GetTest(c *gin.Context) {
 	c.JSON(200, gin.H{"data": Tests})
 }
 
-// SaveTest saves the Test
-func (u TestController) SaveTest(c *gin.Context) {
+// CreateTest creates new Test
+func (u TestController) CreateTest(c *gin.Context) {
 	Test := models.Test{}
 	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
 
@@ -88,6 +88,38 @@ func (u TestController) SaveTest(c *gin.Context) {
 
 // UpdateTest updates Test
 func (u TestController) UpdateTest(c *gin.Context) {
+
+	paramID := c.Param("id")
+
+	id, err := strconv.Atoi(paramID)
+
+	if err != nil {
+		u.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	Test, _ := u.service.GetOneTest(uint(id))
+	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
+
+	if err := c.ShouldBindJSON(&Test); err != nil {
+		u.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := u.service.WithTrx(trxHandle).UpdateTest(Test); err != nil {
+		u.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	c.JSON(200, gin.H{"data": "Test updated"})
 }
 
