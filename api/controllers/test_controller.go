@@ -1,14 +1,16 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"main/constants"
 	"main/lib"
 	"main/models"
 	"main/services"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // TestController data type
@@ -75,6 +77,9 @@ func (u TestController) CreateTest(c *gin.Context) {
 		return
 	}
 
+	Test.CreatedAt = time.Now()
+	Test.UpdatedAt = time.Now()
+
 	if err := u.service.WithTrx(trxHandle).CreateTest(Test); err != nil {
 		u.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -111,6 +116,8 @@ func (u TestController) UpdateTest(c *gin.Context) {
 		})
 		return
 	}
+
+	Test.UpdatedAt = time.Now()
 
 	if err := u.service.WithTrx(trxHandle).UpdateTest(Test); err != nil {
 		u.logger.Error(err)
