@@ -2,9 +2,10 @@ package services
 
 import (
 	"errors"
-	"github.com/dgrijalva/jwt-go"
 	"io/ioutil"
 	"main/lib"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 // JWTAuthService service relating to authorization
@@ -24,7 +25,7 @@ func NewJWTAuthService(env lib.Env, logger lib.Logger) JWTAuthService {
 // Authorize authorizes the generated token
 func (s JWTAuthService) Authorize(tokenString string) (bool, error) {
 
-	keyData, err := ioutil.ReadFile("./public.key")
+	keyData, err := ioutil.ReadFile("public.key")
 	if err != nil {
 		return false, err
 	}
@@ -33,18 +34,25 @@ func (s JWTAuthService) Authorize(tokenString string) (bool, error) {
 		return false, err
 	}
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+		if err != nil {
+			return false, errors.New("token invalid")
+		}
 		return key, nil
 	})
-
-	if token.Valid {
-		return true, nil
-	} else if ve, ok := err.(*jwt.ValidationError); ok {
+	if ve, ok := err.(*jwt.ValidationError); ok {
 		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
 			return false, errors.New("token malformed")
 		}
 		if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
 			return false, errors.New("token expired")
 		}
+		if ve.Errors&(jwt.ValidationErrorClaimsInvalid) != 0 {
+			return false, errors.New("token invalid")
+		}
+	} else if token.Valid {
+		return true, nil
+	} else {
+		return false, errors.New("token false")
 	}
 	return false, errors.New("couldn't handle token")
 }

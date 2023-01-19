@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"main/lib"
 	"main/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 // JWTAuthMiddleware middleware for jwt authentication
@@ -41,10 +42,11 @@ func (m JWTAuthMiddleware) Handler() gin.HandlerFunc {
 				c.Next()
 				return
 			}
+
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
 			})
-			m.logger.Error(err)
+			//m.logger.Error(err)
 			c.Abort()
 			return
 		}
