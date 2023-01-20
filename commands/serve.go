@@ -1,10 +1,13 @@
 package commands
 
 import (
-	"github.com/spf13/cobra"
 	"main/api/middlewares"
 	"main/api/routes"
 	"main/lib"
+
+	"github.com/spf13/cobra"
+	// swagger embed files
+	// gin-swagger middleware
 )
 
 // ServeCommand test command

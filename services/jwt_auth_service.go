@@ -51,8 +51,7 @@ func (s JWTAuthService) Authorize(tokenString string) (bool, error) {
 		}
 	} else if token.Valid {
 		return true, nil
-	} else {
-		return false, errors.New("token false")
 	}
+
 	return false, errors.New("couldn't handle token")
 }
