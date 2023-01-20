@@ -1,14 +1,16 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"main/constants"
 	"main/lib"
 	"main/models"
 	"main/services"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // TestController data type
@@ -25,7 +27,12 @@ func NewTestController(TestService services.TestService, logger lib.Logger) Test
 	}
 }
 
-// GetOneTest gets one Test
+// @Summary Gets one test
+// @Tags get tests
+// @Description Get one test by id
+// @Param id path int true "Test id"
+// @Security ApiKeyAuth
+// @Router /api/test/{id} [get]
 func (u TestController) GetOneTest(c *gin.Context) {
 	paramID := c.Param("id")
 
@@ -53,7 +60,11 @@ func (u TestController) GetOneTest(c *gin.Context) {
 
 }
 
-// GetTest gets the Test
+// @Summary Get all test
+// @Tags get tests
+// @Description Get all the Tests
+// @Security ApiKeyAuth
+// @Router /api/test [get]
 func (u TestController) GetTest(c *gin.Context) {
 	Tests, err := u.service.GetAllTest()
 	if err != nil {
@@ -62,8 +73,15 @@ func (u TestController) GetTest(c *gin.Context) {
 	c.JSON(200, gin.H{"data": Tests})
 }
 
-// SaveTest saves the Test
-func (u TestController) SaveTest(c *gin.Context) {
+// @Summary Create GetTests
+// @Tags create test
+// @Description Create new test
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param input body string true "test data"
+// @Router /api/test [post]
+func (u TestController) CreateTest(c *gin.Context) {
 	Test := models.Test{}
 	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
 
@@ -74,6 +92,9 @@ func (u TestController) SaveTest(c *gin.Context) {
 		})
 		return
 	}
+
+	Test.CreatedAt = time.Now()
+	Test.UpdatedAt = time.Now()
 
 	if err := u.service.WithTrx(trxHandle).CreateTest(Test); err != nil {
 		u.logger.Error(err)
@@ -86,12 +107,61 @@ func (u TestController) SaveTest(c *gin.Context) {
 	c.JSON(200, gin.H{"data": "Test created"})
 }
 
-// UpdateTest updates Test
+// @Summary Update test
+// @Tags update test
+// @Description Update an old test
+// @Param id path int true "Test id"
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param input body string true "test data"
+// @Router /api/test/{id} [post]
 func (u TestController) UpdateTest(c *gin.Context) {
+
+	paramID := c.Param("id")
+
+	id, err := strconv.Atoi(paramID)
+
+	if err != nil {
+		u.logger.Error(err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	Test, _ := u.service.GetOneTest(uint(id))
+	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
+
+	if err := c.ShouldBindJSON(&Test); err != nil {
+		u.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	Test.UpdatedAt = time.Now()
+
+	if err := u.service.WithTrx(trxHandle).UpdateTest(Test); err != nil {
+		u.logger.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
 	c.JSON(200, gin.H{"data": "Test updated"})
 }
 
-// DeleteTest deletes Test
+// @Summary delete test
+// @Tags Tests Control
+// @Description delete test
+// @ID delete-test
+// @Param id path int true "Test id"
+// @Produce json
+// @Security ApiKeyAuth
+// @Router /api/test/{id} [delete]
 func (u TestController) DeleteTest(c *gin.Context) {
 	paramID := c.Param("id")
 

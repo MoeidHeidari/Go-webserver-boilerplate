@@ -21,7 +21,7 @@ func (s TestRoutes) Setup() {
 	{
 		api.GET("/test", s.TestController.GetTest)
 		api.GET("/test/:id", s.TestController.GetOneTest)
-		api.POST("/test", s.TestController.SaveTest)
+		api.POST("/test", s.TestController.CreateTest)
 		api.POST("/test/:id", s.TestController.UpdateTest)
 		api.DELETE("/test/:id", s.TestController.DeleteTest)
 	}

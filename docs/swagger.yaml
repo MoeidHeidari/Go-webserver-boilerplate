@@ -1,0 +1,96 @@
+host: localhost:3000
+info:
+  contact: {}
+  description: The BEST API you have ever seen
+  title: SkyFarm
+paths:
+  /api/test:
+    get:
+      description: Get all the Tests
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Get all test
+      tags:
+      - get tests
+    post:
+      consumes:
+      - application/json
+      description: Create new test
+      parameters:
+      - description: test data
+        in: body
+        name: input
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Create GetTests
+      tags:
+      - create test
+  /api/test/{id}:
+    delete:
+      description: delete test
+      operationId: delete-test
+      parameters:
+      - description: Test id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: delete test
+      tags:
+      - Tests Control
+    get:
+      description: Get one test by id
+      parameters:
+      - description: Test id
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Gets one test
+      tags:
+      - get tests
+    post:
+      consumes:
+      - application/json
+      description: Update an old test
+      parameters:
+      - description: Test id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: test data
+        in: body
+        name: input
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Update test
+      tags:
+      - update test
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

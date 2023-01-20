@@ -1,0 +1,150 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "The BEST API you have ever seen",
+        "title": "SkyFarm",
+        "contact": {}
+    },
+    "host": "localhost:3000",
+    "paths": {
+        "/api/test": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get all the Tests",
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Get all test",
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create new test",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "create test"
+                ],
+                "summary": "Create GetTests",
+                "parameters": [
+                    {
+                        "description": "test data",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/test/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get one test by id",
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Gets one test",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Test id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update an old test",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "update test"
+                ],
+                "summary": "Update test",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Test id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "test data",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "delete test",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tests Control"
+                ],
+                "summary": "delete test",
+                "operationId": "delete-test",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Test id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

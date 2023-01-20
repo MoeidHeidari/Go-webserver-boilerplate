@@ -9,6 +9,7 @@ import (
 // Env has environment stored
 type Env struct {
 	ServerPort  string `mapstructure:"SERVER_PORT"`
+	SwaggerPort string `mapstructure:"SWAGGER_PORT"`
 	Environment string `mapstructure:"ENV"`
 	LogOutput   string `mapstructure:"LOG_OUTPUT"`
 	DBUsername  string `mapstructure:"DB_USER"`
