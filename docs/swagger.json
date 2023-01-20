@@ -3,12 +3,86 @@
     "info": {
         "description": "The BEST API you have ever seen",
         "title": "SkyFarm",
-        "contact": {},
-        "version": "1.0"
+        "contact": {}
     },
-    "host": "localhost:6001",
-    "basePath": "/api/v1",
-    "paths": {},
+    "host": "localhost:3000",
+    "paths": {
+        "/api/test": {
+            "get": {
+                "description": "Get all the Tests",
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Get all test",
+                "responses": {}
+            },
+            "post": {
+                "description": "Create new test",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "create test"
+                ],
+                "summary": "Create GetTests",
+                "parameters": [
+                    {
+                        "description": "test data",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/test/{id}": {
+            "get": {
+                "description": "Get one test by id",
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Gets one test",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Test id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "description": "delete test",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tests Control"
+                ],
+                "summary": "delete test",
+                "operationId": "delete-test",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Test id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
     "securityDefinitions": {
         "BasicAuth": {
             "type": "basic"

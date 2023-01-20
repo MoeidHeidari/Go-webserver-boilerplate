@@ -27,7 +27,11 @@ func NewTestController(TestService services.TestService, logger lib.Logger) Test
 	}
 }
 
-// GetOneTest gets one Test
+// @Summary Gets one test
+// @Tags get tests
+// @Description Get one test by id
+// @Param id path int true "Test id"
+// @Router /api/test/{id} [get]
 func (u TestController) GetOneTest(c *gin.Context) {
 	paramID := c.Param("id")
 
@@ -55,7 +59,10 @@ func (u TestController) GetOneTest(c *gin.Context) {
 
 }
 
-// GetTest gets the Test
+// @Summary Get all test
+// @Tags get tests
+// @Description Get all the Tests
+// @Router /api/test [get]
 func (u TestController) GetTest(c *gin.Context) {
 	Tests, err := u.service.GetAllTest()
 	if err != nil {
@@ -64,7 +71,13 @@ func (u TestController) GetTest(c *gin.Context) {
 	c.JSON(200, gin.H{"data": Tests})
 }
 
-// CreateTest creates new Test
+// @Summary Create GetTests
+// @Tags create test
+// @Description Create new test
+// @Accept json
+// @Produce json
+// @Param input body string true "test data"
+// @Router /api/test [post]
 func (u TestController) CreateTest(c *gin.Context) {
 	Test := models.Test{}
 	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
@@ -130,7 +143,13 @@ func (u TestController) UpdateTest(c *gin.Context) {
 	c.JSON(200, gin.H{"data": "Test updated"})
 }
 
-// DeleteTest deletes Test
+// @Summary delete test
+// @Tags Tests Control
+// @Description delete test
+// @ID delete-test
+// @Param id path int true "Test id"
+// @Produce json
+// @Router /api/test/{id} [delete]
 func (u TestController) DeleteTest(c *gin.Context) {
 	paramID := c.Param("id")
 

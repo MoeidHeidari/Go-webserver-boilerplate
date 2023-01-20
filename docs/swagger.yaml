@@ -1,11 +1,61 @@
-basePath: /api/v1
-host: localhost:6001
+host: localhost:3000
 info:
   contact: {}
   description: The BEST API you have ever seen
   title: SkyFarm
-  version: "1.0"
-paths: {}
+paths:
+  /api/test:
+    get:
+      description: Get all the Tests
+      responses: {}
+      summary: Get all test
+      tags:
+      - get tests
+    post:
+      consumes:
+      - application/json
+      description: Create new test
+      parameters:
+      - description: test data
+        in: body
+        name: input
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Create GetTests
+      tags:
+      - create test
+  /api/test/{id}:
+    delete:
+      description: delete test
+      operationId: delete-test
+      parameters:
+      - description: Test id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      summary: delete test
+      tags:
+      - Tests Control
+    get:
+      description: Get one test by id
+      parameters:
+      - description: Test id
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      summary: Gets one test
+      tags:
+      - get tests
 securityDefinitions:
   BasicAuth:
     type: basic

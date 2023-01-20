@@ -15,7 +15,83 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {},
+    "paths": {
+        "/api/test": {
+            "get": {
+                "description": "Get all the Tests",
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Get all test",
+                "responses": {}
+            },
+            "post": {
+                "description": "Create new test",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "create test"
+                ],
+                "summary": "Create GetTests",
+                "parameters": [
+                    {
+                        "description": "test data",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/test/{id}": {
+            "get": {
+                "description": "Get one test by id",
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Gets one test",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Test id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "delete": {
+                "description": "delete test",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tests Control"
+                ],
+                "summary": "delete test",
+                "operationId": "delete-test",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Test id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        }
+    },
     "securityDefinitions": {
         "BasicAuth": {
             "type": "basic"
@@ -25,9 +101,9 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:6001",
-	BasePath:         "/api/v1",
+	Version:          "",
+	Host:             "localhost:3000",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "SkyFarm",
 	Description:      "The BEST API you have ever seen",

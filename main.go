@@ -12,10 +12,8 @@ import (
 )
 
 // @title SkyFarm
-// @version 1.0
 // @description The BEST API you have ever seen
-// @host localhost:6001
-// @BasePath /api/v1
+// @host localhost:3000
 // @securityDefinitions.basic  BasicAuth
 
 func main() {

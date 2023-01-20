@@ -1,8 +1,9 @@
 package middlewares
 
 import (
-	cors "github.com/rs/cors/wrapper/gin"
 	"main/lib"
+
+	cors "github.com/rs/cors/wrapper/gin"
 )
 
 // CorsMiddleware middleware for cors
@@ -30,7 +31,7 @@ func (m CorsMiddleware) Setup() {
 		AllowCredentials: true,
 		AllowOriginFunc:  func(origin string) bool { return true },
 		AllowedHeaders:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "HEAD", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "HEAD", "OPTIONS", "DELETE"},
 		Debug:            debug,
 	}))
 }
