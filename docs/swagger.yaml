@@ -1,8 +1,12 @@
-basePath: /
-host: localhost:8080
+basePath: /api/v1
+host: localhost:6001
 info:
   contact: {}
+  description: The BEST API you have ever seen
   title: SkyFarm
   version: "1.0"
 paths: {}
+securityDefinitions:
+  BasicAuth:
+    type: basic
 swagger: "2.0"

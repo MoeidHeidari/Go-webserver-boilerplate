@@ -1,11 +1,17 @@
 {
     "swagger": "2.0",
     "info": {
+        "description": "The BEST API you have ever seen",
         "title": "SkyFarm",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
-    "basePath": "/",
-    "paths": {}
+    "host": "localhost:6001",
+    "basePath": "/api/v1",
+    "paths": {},
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
+        }
+    }
 }
