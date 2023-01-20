@@ -18,6 +18,11 @@ const docTemplate = `{
     "paths": {
         "/api/test": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get all the Tests",
                 "tags": [
                     "get tests"
@@ -26,6 +31,11 @@ const docTemplate = `{
                 "responses": {}
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Create new test",
                 "consumes": [
                     "application/json"
@@ -53,6 +63,11 @@ const docTemplate = `{
         },
         "/api/test/{id}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get one test by id",
                 "tags": [
                     "get tests"
@@ -69,7 +84,49 @@ const docTemplate = `{
                 ],
                 "responses": {}
             },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update an old test",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "update test"
+                ],
+                "summary": "Update test",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Test id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "test data",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {}
+            },
             "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "delete test",
                 "produces": [
                     "application/json"
@@ -93,8 +150,10 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "BasicAuth": {
-            "type": "basic"
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

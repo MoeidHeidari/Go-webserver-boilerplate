@@ -14,7 +14,9 @@ import (
 // @title SkyFarm
 // @description The BEST API you have ever seen
 // @host localhost:3000
-// @securityDefinitions.basic  BasicAuth
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 
 func main() {
 	go runSwagger()

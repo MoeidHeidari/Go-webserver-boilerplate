@@ -31,6 +31,7 @@ func NewTestController(TestService services.TestService, logger lib.Logger) Test
 // @Tags get tests
 // @Description Get one test by id
 // @Param id path int true "Test id"
+// @Security ApiKeyAuth
 // @Router /api/test/{id} [get]
 func (u TestController) GetOneTest(c *gin.Context) {
 	paramID := c.Param("id")
@@ -62,6 +63,7 @@ func (u TestController) GetOneTest(c *gin.Context) {
 // @Summary Get all test
 // @Tags get tests
 // @Description Get all the Tests
+// @Security ApiKeyAuth
 // @Router /api/test [get]
 func (u TestController) GetTest(c *gin.Context) {
 	Tests, err := u.service.GetAllTest()
@@ -76,6 +78,7 @@ func (u TestController) GetTest(c *gin.Context) {
 // @Description Create new test
 // @Accept json
 // @Produce json
+// @Security ApiKeyAuth
 // @Param input body string true "test data"
 // @Router /api/test [post]
 func (u TestController) CreateTest(c *gin.Context) {
@@ -104,7 +107,15 @@ func (u TestController) CreateTest(c *gin.Context) {
 	c.JSON(200, gin.H{"data": "Test created"})
 }
 
-// UpdateTest updates Test
+// @Summary Update test
+// @Tags update test
+// @Description Update an old test
+// @Param id path int true "Test id"
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param input body string true "test data"
+// @Router /api/test/{id} [post]
 func (u TestController) UpdateTest(c *gin.Context) {
 
 	paramID := c.Param("id")
@@ -149,6 +160,7 @@ func (u TestController) UpdateTest(c *gin.Context) {
 // @ID delete-test
 // @Param id path int true "Test id"
 // @Produce json
+// @Security ApiKeyAuth
 // @Router /api/test/{id} [delete]
 func (u TestController) DeleteTest(c *gin.Context) {
 	paramID := c.Param("id")
