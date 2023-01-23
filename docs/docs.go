@@ -16,6 +16,51 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/currency": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get one test by id",
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Gets currencies",
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Post request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Gets post responce",
+                "parameters": [
+                    {
+                        "description": "Post form",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/api/test": {
             "get": {
                 "security": [
@@ -132,7 +177,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Tests Control"
+                    "Delete"
                 ],
                 "summary": "delete test",
                 "operationId": "delete-test",

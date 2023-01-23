@@ -4,6 +4,34 @@ info:
   description: The BEST API you have ever seen
   title: SkyFarm
 paths:
+  /api/currency:
+    get:
+      description: Get one test by id
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Gets currencies
+      tags:
+      - get tests
+    post:
+      consumes:
+      - application/json
+      description: Post request
+      parameters:
+      - description: Post form
+        in: body
+        name: input
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Gets post responce
+      tags:
+      - get tests
   /api/test:
     get:
       description: Get all the Tests
@@ -49,7 +77,7 @@ paths:
       - ApiKeyAuth: []
       summary: delete test
       tags:
-      - Tests Control
+      - Delete
     get:
       description: Get one test by id
       parameters:

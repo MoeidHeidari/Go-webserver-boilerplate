@@ -155,7 +155,7 @@ func (u TestController) UpdateTest(c *gin.Context) {
 }
 
 // @Summary delete test
-// @Tags Tests Control
+// @Tags Delete
 // @Description delete test
 // @ID delete-test
 // @Param id path int true "Test id"
