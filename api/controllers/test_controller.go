@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // TestController data type
@@ -84,6 +85,7 @@ func (u TestController) CreateTest(c *gin.Context) {
 
 	Test.CreatedAt = time.Now()
 	Test.UpdatedAt = time.Now()
+	Test.ID = primitive.NewObjectID()
 
 	if err := u.service.CreateTest(Test); err != nil {
 		u.logger.Error(err)
