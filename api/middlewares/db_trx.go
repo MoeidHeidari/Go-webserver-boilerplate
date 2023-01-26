@@ -1,11 +1,9 @@
 package middlewares
 
 import (
-	"net/http"
+	"main/lib"
 
 	"github.com/gin-gonic/gin"
-	"main/constants"
-	"main/lib"
 )
 
 // DatabaseTrx middleware for transactions support for database
@@ -43,28 +41,28 @@ func (m DatabaseTrx) Setup() {
 	m.logger.Info("setting up database transaction middleware")
 
 	m.handler.Gin.Use(func(c *gin.Context) {
-		txHandle := m.db.DB.Begin()
+		//txHandle := m.db.DB.Begin()
 		m.logger.Info("beginning2 database transaction")
 		m.logger.Info("here")
 
-		defer func() {
-			if r := recover(); r != nil {
-				txHandle.Rollback()
-			}
-		}()
+		// defer func() {
+		// 	if r := recover(); r != nil {
+		// 		txHandle.Rollback()
+		// 	}
+		// }()
 
-		c.Set(constants.DBTransaction, txHandle)
+		// c.Set(constants.DBTransaction, txHandle)
 		c.Next()
 
 		// commit transaction on success status
-		if statusInList(c.Writer.Status(), []int{http.StatusOK, http.StatusCreated, http.StatusNoContent}) {
-			m.logger.Info("committing transactions")
-			if err := txHandle.Commit().Error; err != nil {
-				m.logger.Error("trx commit error: ", err)
-			}
-		} else {
-			m.logger.Info("rolling back transaction due to status code: 500")
-			txHandle.Rollback()
-		}
+		// if statusInList(c.Writer.Status(), []int{http.StatusOK, http.StatusCreated, http.StatusNoContent}) {
+		// 	m.logger.Info("committing transactions")
+		// 	if err := txHandle.Commit().Error; err != nil {
+		// 		m.logger.Error("trx commit error: ", err)
+		// 	}
+		// } else {
+		// 	m.logger.Info("rolling back transaction due to status code: 500")
+		// 	txHandle.Rollback()
+		// }
 	})
 }

@@ -3,10 +3,11 @@ package commands
 import (
 	"context"
 
+	"main/lib"
+
 	"github.com/spf13/cobra"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
-	"main/lib"
 )
 
 var cmds = map[string]lib.Command{

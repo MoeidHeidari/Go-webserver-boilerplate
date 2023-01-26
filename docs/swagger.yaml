@@ -34,6 +34,8 @@ paths:
       - get tests
   /api/test:
     get:
+      consumes:
+      - '*/*'
       description: Get all the Tests
       responses: {}
       security:
@@ -86,6 +88,8 @@ paths:
         name: id
         required: true
         type: integer
+      produces:
+      - application/json
       responses: {}
       security:
       - ApiKeyAuth: []

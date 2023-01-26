@@ -6,12 +6,12 @@ import (
 
 // Test model
 type Test struct {
-	ID        uint      `json:"id"`
-	Name      string    `json:"name"`
-	Passed    bool      `json:"passed"`
-	Number    uint8     `json:"number"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        string    `bson:"_id"`
+	Name      string    `bson:"name"`
+	Passed    bool      `bson:"passed"`
+	Number    uint8     `bson:"number"`
+	CreatedAt time.Time `bson:"created_at"`
+	UpdatedAt time.Time `bson:"updated_at"`
 }
 
 // TableName gives table name of model

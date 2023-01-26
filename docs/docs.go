@@ -69,6 +69,9 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Get all the Tests",
+                "consumes": [
+                    "*/*"
+                ],
                 "tags": [
                     "get tests"
                 ],
@@ -114,6 +117,9 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Get one test by id",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "get tests"
                 ],

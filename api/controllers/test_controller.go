@@ -1,16 +1,13 @@
 package controllers
 
 import (
-	"main/constants"
 	"main/lib"
 	"main/models"
 	"main/services"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // TestController data type
@@ -31,20 +28,13 @@ func NewTestController(TestService services.TestService, logger lib.Logger) Test
 // @Tags get tests
 // @Description Get one test by id
 // @Param id path int true "Test id"
+// @Produce json
 // @Security ApiKeyAuth
 // @Router /api/test/{id} [get]
 func (u TestController) GetOneTest(c *gin.Context) {
 	paramID := c.Param("id")
 
-	id, err := strconv.Atoi(paramID)
-	if err != nil {
-		u.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-		return
-	}
-	Test, err := u.service.GetOneTest(uint(id))
+	Test, err := u.service.GetOneTest(paramID)
 
 	if err != nil {
 		u.logger.Error(err)
@@ -54,15 +44,14 @@ func (u TestController) GetOneTest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"data": Test,
-	})
+	c.JSON(200, Test)
 
 }
 
 // @Summary Get all test
 // @Tags get tests
 // @Description Get all the Tests
+// @Accept */*
 // @Security ApiKeyAuth
 // @Router /api/test [get]
 func (u TestController) GetTest(c *gin.Context) {
@@ -70,7 +59,7 @@ func (u TestController) GetTest(c *gin.Context) {
 	if err != nil {
 		u.logger.Error(err)
 	}
-	c.JSON(200, gin.H{"data": Tests})
+	c.JSON(200, Tests)
 }
 
 // @Summary Create GetTests
@@ -83,7 +72,7 @@ func (u TestController) GetTest(c *gin.Context) {
 // @Router /api/test [post]
 func (u TestController) CreateTest(c *gin.Context) {
 	Test := models.Test{}
-	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
+	//trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
 
 	if err := c.ShouldBindJSON(&Test); err != nil {
 		u.logger.Error(err)
@@ -96,7 +85,7 @@ func (u TestController) CreateTest(c *gin.Context) {
 	Test.CreatedAt = time.Now()
 	Test.UpdatedAt = time.Now()
 
-	if err := u.service.WithTrx(trxHandle).CreateTest(Test); err != nil {
+	if err := u.service.CreateTest(Test); err != nil {
 		u.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -104,7 +93,7 @@ func (u TestController) CreateTest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"data": "Test created"})
+	c.JSON(200, "Test created")
 }
 
 // @Summary Update test
@@ -119,19 +108,7 @@ func (u TestController) CreateTest(c *gin.Context) {
 func (u TestController) UpdateTest(c *gin.Context) {
 
 	paramID := c.Param("id")
-
-	id, err := strconv.Atoi(paramID)
-
-	if err != nil {
-		u.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-		return
-	}
-
-	Test, _ := u.service.GetOneTest(uint(id))
-	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
+	Test, _ := u.service.GetOneTest(paramID)
 
 	if err := c.ShouldBindJSON(&Test); err != nil {
 		u.logger.Error(err)
@@ -143,7 +120,7 @@ func (u TestController) UpdateTest(c *gin.Context) {
 
 	Test.UpdatedAt = time.Now()
 
-	if err := u.service.WithTrx(trxHandle).UpdateTest(Test); err != nil {
+	if err := u.service.UpdateTest(Test); err != nil {
 		u.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -151,7 +128,7 @@ func (u TestController) UpdateTest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"data": "Test updated"})
+	c.JSON(200, "Test updated")
 }
 
 // @Summary delete test
@@ -165,16 +142,7 @@ func (u TestController) UpdateTest(c *gin.Context) {
 func (u TestController) DeleteTest(c *gin.Context) {
 	paramID := c.Param("id")
 
-	id, err := strconv.Atoi(paramID)
-	if err != nil {
-		u.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-		return
-	}
-
-	if err := u.service.DeleteTest(uint(id)); err != nil {
+	if err := u.service.DeleteTest(paramID); err != nil {
 		u.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -182,5 +150,5 @@ func (u TestController) DeleteTest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"data": "Test deleted"})
+	c.JSON(200, "Test deleted")
 }
