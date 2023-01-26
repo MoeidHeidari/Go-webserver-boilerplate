@@ -61,6 +61,88 @@ const docTemplate = `{
                 "responses": {}
             }
         },
+        "/api/kube_add": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Post request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kubernetes"
+                ],
+                "summary": "Create a pod",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "pod_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "container_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "image_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Field",
+                        "name": "command",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/kube_get": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Post request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kubernetes"
+                ],
+                "summary": "Get pod info",
+                "responses": {}
+            }
+        },
         "/api/test": {
             "get": {
                 "security": [
@@ -68,14 +150,23 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get all the Tests",
-                "consumes": [
-                    "*/*"
+                "description": "Get all test fields",
+                "produces": [
+                    "application/json"
                 ],
                 "tags": [
-                    "get tests"
+                    "get all test fields"
                 ],
-                "summary": "Get all test",
+                "summary": "Get all test fields",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "field_name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {}
             },
             "post": {

@@ -68,6 +68,23 @@ func (u TestController) GetTest(c *gin.Context) {
 	c.JSON(200, Tests)
 }
 
+// @Summary Get all test fields
+// @Tags get all test fields
+// @Description Get all test fields
+// @Param field_name path string true "Field"
+// @Produce json
+// @Security ApiKeyAuth
+// @Router /api/test [get]
+func (u TestController) GetTestField(c *gin.Context) {
+	field_name := c.Param("field_name")
+	Tests, err := u.service.GetAllTestField(field_name)
+	if err != nil {
+		u.logger.Error(err)
+	}
+
+	c.JSON(200, Tests)
+}
+
 // @Summary Create GetTests
 // @Tags create test
 // @Description Create new test

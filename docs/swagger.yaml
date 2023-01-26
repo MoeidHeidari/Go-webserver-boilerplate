@@ -32,17 +32,77 @@ paths:
       summary: Gets post responce
       tags:
       - get tests
-  /api/test:
-    get:
+  /api/kube_add:
+    post:
       consumes:
-      - '*/*'
-      description: Get all the Tests
+      - application/json
+      description: Post request
+      parameters:
+      - description: Field
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: Field
+        in: path
+        name: pod_name
+        required: true
+        type: string
+      - description: Field
+        in: path
+        name: container_name
+        required: true
+        type: string
+      - description: Field
+        in: path
+        name: image_type
+        required: true
+        type: string
+      - description: Field
+        in: query
+        items:
+          type: string
+        name: command
+        required: true
+        type: array
+      produces:
+      - application/json
       responses: {}
       security:
       - ApiKeyAuth: []
-      summary: Get all test
+      summary: Create a pod
       tags:
-      - get tests
+      - kubernetes
+  /api/kube_get:
+    post:
+      consumes:
+      - application/json
+      description: Post request
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Get pod info
+      tags:
+      - kubernetes
+  /api/test:
+    get:
+      description: Get all test fields
+      parameters:
+      - description: Field
+        in: path
+        name: field_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Get all test fields
+      tags:
+      - get all test fields
     post:
       consumes:
       - application/json

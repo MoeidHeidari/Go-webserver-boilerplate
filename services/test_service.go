@@ -8,6 +8,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // TestService service layer
@@ -47,6 +48,23 @@ func (s TestService) GetAllTest() (Tests []models.Test, err error) {
 	if err != nil {
 		s.logger.Fatal(err)
 	}
+	if err = curr.All(context.TODO(), &Tests); err != nil {
+		panic(err)
+	}
+
+	return Tests, err
+}
+
+// GetAllTestField get all the Field
+func (s TestService) GetAllTestField(field_name string) (Tests []string, err error) {
+	filter := bson.D{{}}
+	opts := options.Find().SetProjection(bson.D{{field_name, 0}})
+	curr, err := s.repository.Collection.Find(context.TODO(), filter, opts)
+
+	if err != nil {
+		s.logger.Fatal(err)
+	}
+
 	if err = curr.All(context.TODO(), &Tests); err != nil {
 		panic(err)
 	}
