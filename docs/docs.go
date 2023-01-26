@@ -126,7 +126,7 @@ const docTemplate = `{
                 "summary": "Gets one test",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Test id",
                         "name": "id",
                         "in": "path",

@@ -28,14 +28,19 @@ func NewTestController(TestService services.TestService, logger lib.Logger) Test
 // @Summary Gets one test
 // @Tags get tests
 // @Description Get one test by id
-// @Param id path int true "Test id"
+// @Param id path string true "Test id"
 // @Produce json
 // @Security ApiKeyAuth
 // @Router /api/test/{id} [get]
 func (u TestController) GetOneTest(c *gin.Context) {
 	paramID := c.Param("id")
 
-	Test, err := u.service.GetOneTest(paramID)
+	objID, err := primitive.ObjectIDFromHex(paramID)
+	if err != nil {
+		return
+	}
+
+	Test, err := u.service.GetOneTest(objID)
 
 	if err != nil {
 		u.logger.Error(err)
@@ -110,7 +115,13 @@ func (u TestController) CreateTest(c *gin.Context) {
 func (u TestController) UpdateTest(c *gin.Context) {
 
 	paramID := c.Param("id")
-	Test, _ := u.service.GetOneTest(paramID)
+
+	objID, err := primitive.ObjectIDFromHex(paramID)
+	if err != nil {
+		return
+	}
+
+	Test, _ := u.service.GetOneTest(objID)
 
 	if err := c.ShouldBindJSON(&Test); err != nil {
 		u.logger.Error(err)

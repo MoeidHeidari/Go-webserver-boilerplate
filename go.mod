@@ -18,7 +18,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/swaggo/files v1.0.0
-	github.com/swaggo/swag v1.8.9
+	github.com/swaggo/swag v1.8.10
 	go.mongodb.org/mongo-driver v1.11.1
 	go.uber.org/zap v1.24.0
 	k8s.io/apimachinery v0.26.1

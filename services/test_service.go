@@ -7,6 +7,7 @@ import (
 	"main/repository"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // TestService service layer
@@ -30,7 +31,7 @@ func NewTestService(logger lib.Logger, repository repository.TestRepository) Tes
 // }
 
 // GetOneTest gets one Test
-func (s TestService) GetOneTest(id string) (result models.Test, err error) {
+func (s TestService) GetOneTest(id primitive.ObjectID) (result models.Test, err error) {
 	filter := bson.D{{"_id", id}}
 	err = s.repository.Collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
