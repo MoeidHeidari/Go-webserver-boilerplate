@@ -78,13 +78,13 @@ func (u KubeRequest) CreatePodRequest(c *gin.Context) {
 		},
 	}
 
-	pod, err := u.clientset.CoreV1().Pods(namespace).Create(context.TODO(), newpod, metav1.CreateOptions{})
+	_, err := u.clientset.CoreV1().Pods(namespace).Create(context.TODO(), newpod, metav1.CreateOptions{})
 
 	if err != nil {
 		panic(err.Error())
 	}
 
-	fmt.Println(pod) // just output
+	c.JSON(200, pod_name+" was added.")
 }
 
 // @Summary Get pod info
