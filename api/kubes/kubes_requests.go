@@ -3,10 +3,17 @@ package kubes
 import (
 	"context"
 	"fmt"
+	"log"
 	"main/lib"
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin" // swagger embed files
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart/loader"
+	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/release"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,17 +26,19 @@ type KubeRequest struct {
 	clientset *kubernetes.Clientset
 }
 
+type ChartBody struct {
+	ChartPath   string `json:"chart_path"`
+	Namespace   string `json:"namespace"`
+	ReleaseName string `json:"release_name"`
+}
+
 func NewKubeRequest(logger lib.Logger) KubeRequest {
 
-	rules := clientcmd.NewDefaultClientConfigLoadingRules()
-	kubeconfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{})
-	config, err := kubeconfig.ClientConfig()
-
-	if err != nil {
+	if err := helmInit(); err != nil {
 		panic(err.Error())
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
+	clientset, err := clientsetInit()
 
 	if err != nil {
 		panic(err.Error())
@@ -39,6 +48,89 @@ func NewKubeRequest(logger lib.Logger) KubeRequest {
 		logger:    logger,
 		clientset: clientset,
 	}
+}
+
+func clientsetInit() (*kubernetes.Clientset, error) {
+	rules := clientcmd.NewDefaultClientConfigLoadingRules()
+	kubeconfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{})
+	config, err := kubeconfig.ClientConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, err
+}
+
+func helmInit() error {
+
+	return nil
+}
+
+// Gets release in Helm
+func HGetRelease(release_name string) (release.Release, error) {
+	panic("Not implemented exception")
+}
+
+func (u KubeRequest) HCreateReleaseRequest(c *gin.Context) {
+	body := ChartBody{}
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		u.logger.Error(err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	release, err := u.HCreateRelease(body.ChartPath, body.Namespace, body.ReleaseName)
+
+	if err != nil {
+		u.logger.Panic(err.Error())
+
+		return
+	}
+
+	c.JSON(200, release.Name+"is created")
+}
+
+func (u KubeRequest) HCreateRelease(chartPath string, namespace string, releaseName string) (*release.Release, error) {
+
+	settings := cli.New()
+	actionConfiguration := new(action.Configuration)
+
+	if err := actionConfiguration.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+		return nil, err
+	}
+
+	client := action.NewInstall(actionConfiguration)
+	client.Namespace = namespace
+	client.ReleaseName = releaseName
+
+	locatedChart, err := client.LocateChart(chartPath, settings)
+	if err != nil {
+		return nil, err
+	}
+
+	newChart, err := loader.Load(locatedChart)
+	if err != nil {
+		return nil, err
+	}
+
+	release, err := client.Run(newChart, map[string]interface{}{})
+	if err != nil {
+		return nil, err
+	}
+
+	return release, nil
 }
 
 // @Summary Create a pod

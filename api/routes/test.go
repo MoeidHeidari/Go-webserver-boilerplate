@@ -22,7 +22,7 @@ type TestRoutes struct {
 // Setup Test routes
 func (s TestRoutes) Setup() {
 	s.logger.Info("Setting up routes")
-	api := s.handler.Gin.Group("/api").Use(s.authMiddleware.Handler())
+	api := s.handler.Gin.Group("/api") //.Use(s.authMiddleware.Handler())
 	{
 		api.GET("/test", s.TestController.GetTest)
 		api.GET("/test/:id", s.TestController.GetOneTest)
@@ -32,6 +32,7 @@ func (s TestRoutes) Setup() {
 		api.POST("/currency", s.testRequest.MakePostRequest)
 		api.POST("/test/:id", s.TestController.UpdateTest)
 		api.POST("/kube_add", s.kubes.CreatePodRequest)
+		api.POST("/helm", s.kubes.HCreateReleaseRequest)
 		api.DELETE("/test/:id", s.TestController.DeleteTest)
 		api.DELETE("/kube_delete/:namespace/:pod_name", s.kubes.DeletePodRequest)
 	}
