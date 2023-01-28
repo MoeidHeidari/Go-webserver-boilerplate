@@ -3,18 +3,11 @@ package kubes
 import (
 	"context"
 	"fmt"
-	"log"
 	"main/lib"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin" // swagger embed files
-	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/cli"
-	"helm.sh/helm/v3/pkg/release"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -24,12 +17,6 @@ import (
 type KubeRequest struct {
 	logger    lib.Logger
 	clientset *kubernetes.Clientset
-}
-
-type ChartBody struct {
-	ChartPath   string `json:"chart_path"`
-	Namespace   string `json:"namespace"`
-	ReleaseName string `json:"release_name"`
 }
 
 func NewKubeRequest(logger lib.Logger) KubeRequest {
@@ -68,71 +55,6 @@ func clientsetInit() (*kubernetes.Clientset, error) {
 	return clientset, err
 }
 
-func helmInit() error {
-
-	return nil
-}
-
-// Gets release in Helm
-func HGetRelease(release_name string) (release.Release, error) {
-	panic("Not implemented exception")
-}
-
-func (u KubeRequest) HCreateReleaseRequest(c *gin.Context) {
-	body := ChartBody{}
-
-	if err := c.ShouldBindJSON(&body); err != nil {
-		u.logger.Error(err)
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-
-		return
-	}
-
-	release, err := u.HCreateRelease(body.ChartPath, body.Namespace, body.ReleaseName)
-
-	if err != nil {
-		u.logger.Panic(err.Error())
-
-		return
-	}
-
-	c.JSON(200, release.Name+"is created")
-}
-
-func (u KubeRequest) HCreateRelease(chartPath string, namespace string, releaseName string) (*release.Release, error) {
-
-	settings := cli.New()
-	actionConfiguration := new(action.Configuration)
-
-	if err := actionConfiguration.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
-		return nil, err
-	}
-
-	client := action.NewInstall(actionConfiguration)
-	client.Namespace = namespace
-	client.ReleaseName = releaseName
-
-	locatedChart, err := client.LocateChart(chartPath, settings)
-	if err != nil {
-		return nil, err
-	}
-
-	newChart, err := loader.Load(locatedChart)
-	if err != nil {
-		return nil, err
-	}
-
-	release, err := client.Run(newChart, map[string]interface{}{})
-	if err != nil {
-		return nil, err
-	}
-
-	return release, nil
-}
-
 // @Summary Create a pod
 // @Tags kubernetes
 // @Accept json
@@ -146,37 +68,29 @@ func (u KubeRequest) HCreateRelease(chartPath string, namespace string, releaseN
 // @Security ApiKeyAuth
 // @Router /api/kube_add [post]
 func (u KubeRequest) CreatePodRequest(c *gin.Context) {
+	body := PodBody{}
 
-	pod_name := c.GetHeader("pod_name")
-	container_name := c.GetHeader("container_name")
-	image := c.GetHeader("image")
-	namespace := c.GetHeader("namespace")
-	command := c.GetHeader("command")
-	command_value := c.GetHeader("command_value")
+	if err := c.ShouldBindJSON(&body); err != nil {
+		u.logger.Error(err)
 
-	newpod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      pod_name,
-			Namespace: namespace,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    container_name,
-					Image:   image,
-					Command: []string{command, command_value},
-				},
-			},
-		},
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+
+		return
 	}
 
-	_, err := u.clientset.CoreV1().Pods(namespace).Create(context.TODO(), newpod, metav1.CreateOptions{})
+	pod, err := u.CreatePod(body)
 
 	if err != nil {
-		panic(err.Error())
+		u.logger.Panic(err.Error())
+
+		return
 	}
 
-	c.JSON(200, pod_name+" was added.")
+	c.JSON(200, gin.H{
+		"message": pod.Name + " is created",
+	})
 }
 
 // @Summary Get pod info
@@ -236,5 +150,7 @@ func (u KubeRequest) DeletePodRequest(c *gin.Context) {
 		panic(err.Error())
 	}
 
-	c.JSON(200, pod_name+" was deleted.")
+	c.JSON(200, gin.H{
+		"message": pod_name + " is deleted",
+	})
 }
