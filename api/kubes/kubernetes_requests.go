@@ -2,28 +2,30 @@ package kubes
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"main/lib"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin" // swagger embed files
-	"k8s.io/apimachinery/pkg/api/errors"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/cli"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 type KubeRequest struct {
-	logger    lib.Logger
-	clientset *kubernetes.Clientset
+	logger              lib.Logger
+	clientset           *kubernetes.Clientset
+	settings            *cli.EnvSettings
+	actionConfiguration *action.Configuration
 }
 
 func NewKubeRequest(logger lib.Logger) KubeRequest {
 
-	if err := helmInit(); err != nil {
-		panic(err.Error())
-	}
+	settings := cli.New()
+	actionConfiguration := new(action.Configuration)
 
 	clientset, err := clientsetInit()
 
@@ -32,8 +34,10 @@ func NewKubeRequest(logger lib.Logger) KubeRequest {
 	}
 
 	return KubeRequest{
-		logger:    logger,
-		clientset: clientset,
+		logger:              logger,
+		clientset:           clientset,
+		settings:            settings,
+		actionConfiguration: actionConfiguration,
 	}
 }
 
@@ -104,22 +108,13 @@ func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
 
 	nodelist, err := u.clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		panic(err.Error())
+		u.logger.Panic(err.Error())
 	}
 	for _, n := range nodelist.Items {
-		fmt.Println(n)
-		pods, err := u.clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
+		pods, err := u.clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
+
 		if err != nil {
-			panic(err.Error())
-		}
-		fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
-		_, err = u.clientset.CoreV1().Pods("default").Get(context.TODO(), "example-xxxxx", metav1.GetOptions{})
-		if errors.IsNotFound(err) {
-			fmt.Printf("Pod example-xxxxx not found in default namespace\n")
-		} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-			fmt.Printf("Error getting pod %v\n", statusError.ErrStatus.Message)
-		} else if err != nil {
-			panic(err.Error())
+			u.logger.Panic(err.Error())
 		}
 
 		var names []string = make([]string, len(pods.Items))
@@ -138,16 +133,28 @@ func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
 	}
 }
 
+func (u KubeRequest) GetCurrentPodStatusRequest(pod_name string) []byte {
+
+	pod, err := u.clientset.CoreV1().Pods("default").Get(context.Background(), pod_name, metav1.GetOptions{})
+	if err != nil {
+		u.logger.Panic(err.Error())
+	}
+	status, err := json.Marshal(pod.Status)
+
+	if err != nil {
+		u.logger.Panic(err.Error())
+	}
+	return status
+}
+
 func (u KubeRequest) DeletePodRequest(c *gin.Context) {
 	pod_name := c.Param("pod_name")
 	namespace := c.Param("namespace")
 
-	fmt.Println(pod_name)
-
 	err := u.clientset.CoreV1().Pods(namespace).Delete(context.TODO(), pod_name, metav1.DeleteOptions{})
 
 	if err != nil {
-		panic(err.Error())
+		u.logger.Panic(err.Error())
 	}
 
 	c.JSON(200, gin.H{

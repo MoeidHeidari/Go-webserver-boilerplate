@@ -6,6 +6,11 @@ type ChartBody struct {
 	ReleaseName string `json:"release_name"`
 }
 
+type RepositoryBody struct {
+	Url  string `json: "url"`
+	Name string `json : "name"`
+}
+
 type PodBody struct {
 	Name          string   `json:"name"`
 	Namespace     string   `json:"namespace"`

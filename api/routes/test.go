@@ -4,9 +4,11 @@ import (
 	"main/api/controllers"
 	"main/api/currencies"
 	"main/api/kubes"
-
 	"main/api/middlewares"
 	"main/lib"
+	"main/ws"
+
+	"github.com/gin-gonic/gin"
 )
 
 // TestRoutes struct
@@ -17,6 +19,7 @@ type TestRoutes struct {
 	testRequest    currencies.Request
 	authMiddleware middlewares.JWTAuthMiddleware
 	kubes          kubes.KubeRequest
+	Websocket      ws.Ws
 }
 
 // Setup Test routes
@@ -28,14 +31,21 @@ func (s TestRoutes) Setup() {
 		api.GET("/test/:id", s.TestController.GetOneTest)
 		api.GET("/currency", s.testRequest.MakeRequest)
 		api.GET("/kube_get", s.kubes.GetPodInfoRequest)
+		api.GET("/helm_get", s.kubes.HGetReleaseRequest)
 		api.POST("/test", s.TestController.CreateTest)
 		api.POST("/currency", s.testRequest.MakePostRequest)
 		api.POST("/test/:id", s.TestController.UpdateTest)
 		api.POST("/kube_add", s.kubes.CreatePodRequest)
 		api.POST("/helm", s.kubes.HCreateReleaseRequest)
+		api.POST("/helm_create_repository", s.kubes.HCreateRepositoryRequest)
 		api.DELETE("/test/:id", s.TestController.DeleteTest)
 		api.DELETE("/kube_delete/:namespace/:pod_name", s.kubes.DeletePodRequest)
+
 	}
+	r := gin.Default()
+	r.GET("/", s.Websocket.MessageHandler)
+	go r.Run(":12121")
+
 }
 
 // NewTestRoutes creates new Test controller
