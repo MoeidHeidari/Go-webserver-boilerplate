@@ -7,8 +7,8 @@ type ChartBody struct {
 }
 
 type RepositoryBody struct {
-	Url  string `json: "url"`
-	Name string `json : "name"`
+	Url  string `json:"url"`
+	Name string `json:"name"`
 }
 
 type PodBody struct {
@@ -17,4 +17,19 @@ type PodBody struct {
 	ContainerName string   `json:"container_name"`
 	Image         string   `json:"image"`
 	Command       []string `json:"command"`
+	ConfigmapName string   `json:"configmap_name"`
+	SecretName    string   `json:"secret_name"`
+	Port          int32    `json:"port"`
+}
+
+type ConfigMapBody struct {
+	Name      string            `json:"name"`
+	Namespace string            `json:"namespace"`
+	Data      map[string]string `json:"env"`
+}
+
+type SecretBody struct {
+	Name      string            `json:"name"`
+	Namespace string            `json:"namespace"`
+	Data      map[string]string `json:"env"`
 }

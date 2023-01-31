@@ -154,10 +154,59 @@ func (u KubeRequest) DeletePodRequest(c *gin.Context) {
 	err := u.clientset.CoreV1().Pods(namespace).Delete(context.TODO(), pod_name, metav1.DeleteOptions{})
 
 	if err != nil {
-		u.logger.Panic(err.Error())
+		c.JSON(404, "pod not found")
+		return
 	}
 
 	c.JSON(200, gin.H{
 		"message": pod_name + " is deleted",
+	})
+}
+
+func (u KubeRequest) CreateOrUpdateConfigMapRequest(c *gin.Context) {
+	body := ConfigMapBody{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		u.logger.Error(err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+	configmap, err := u.CreateOrUpdateConfigMap(body)
+
+	if err != nil {
+		u.logger.Panic(err.Error())
+		c.JSON(400, err.Error())
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"created/updated": configmap.Name,
+	})
+}
+
+func (u KubeRequest) CreateOrUpdateSecretRequest(c *gin.Context) {
+	body := SecretBody{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		u.logger.Error(err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+	secret, err := u.CreateOrUpdateSecret(body)
+
+	if err != nil {
+		u.logger.Panic(err.Error())
+		c.JSON(400, err.Error())
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"created/updated": secret.Name,
 	})
 }

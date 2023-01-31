@@ -38,6 +38,8 @@ func (s TestRoutes) Setup() {
 		api.POST("/kube_add", s.kubes.CreatePodRequest)
 		api.POST("/helm", s.kubes.HCreateReleaseRequest)
 		api.POST("/helm_create_repository", s.kubes.HCreateRepositoryRequest)
+		api.POST("/kube/create_config_map", s.kubes.CreateOrUpdateConfigMapRequest)
+		api.POST("/kube/create_secret", s.kubes.CreateOrUpdateSecretRequest)
 		api.DELETE("/test/:id", s.TestController.DeleteTest)
 		api.DELETE("/kube_delete/:namespace/:pod_name", s.kubes.DeletePodRequest)
 
