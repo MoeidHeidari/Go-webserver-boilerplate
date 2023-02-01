@@ -1,10 +1,13 @@
 package controllers
 
 import (
+	"io/ioutil"
 	"main/lib"
 	"main/models"
 	"main/services"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -181,4 +184,31 @@ func (u TestController) DeleteTest(c *gin.Context) {
 	}
 
 	c.JSON(200, "Test deleted")
+}
+
+func (u TestController) GetCode(c *gin.Context) {
+	paramcode := c.Query("code")
+	Url := "http://localhost:8080/realms/master/protocol/openid-connect/token"
+	url_form := url.Values{
+		"grant_type":    {"authorization_code"},
+		"code":          {paramcode},
+		"client_id":     {"skyfarm"},
+		"redirect_uri":  {"http://localhost:3000/get_code"},
+		"client_secret": {"6pGDiDgS44ecU1u5TTggUbY1pW6S98lv"},
+	}
+	resp, err := http.PostForm(Url, url_form)
+	if err != nil {
+		u.logger.Error(err)
+		c.String(500, err.Error())
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		u.logger.Error(err)
+		c.String(500, err.Error())
+	}
+	resp.Body.Close()
+	//c.Data(200, "text/html; charset=utf-8", []byte("LOHHHH"))
+	c.JSON(200, strings.Split(strings.Split(string(body), ",")[0], ":")[1])
+	u.logger.Info(resp)
 }

@@ -25,6 +25,7 @@ type TestRoutes struct {
 // Setup Test routes
 func (s TestRoutes) Setup() {
 	s.logger.Info("Setting up routes")
+	s.handler.Gin.GET("/get_code", s.TestController.GetCode)
 	api := s.handler.Gin.Group("/api").Use(s.authMiddleware.Handler())
 	{
 		api.GET("/test", s.TestController.GetTest)
