@@ -3,6 +3,7 @@ package kubes
 import (
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"main/lib"
 	"net/http"
 	"time"
@@ -131,6 +132,7 @@ func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
 
 		time.Sleep(10 * time.Second)
 	}
+
 }
 
 func (u KubeRequest) GetCurrentPodStatusRequest(pod_name string) []byte {
@@ -208,5 +210,97 @@ func (u KubeRequest) CreateOrUpdateSecretRequest(c *gin.Context) {
 
 	c.JSON(200, gin.H{
 		"created/updated": secret.Name,
+	})
+}
+
+func (u KubeRequest) CreateNamespaceRequest(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		u.logger.Panic(err.Error())
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	namespace, err := u.CreateNamespace(string(body))
+
+	if err != nil {
+		u.logger.Panic(err.Error())
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"created": namespace.Name,
+	})
+}
+
+func (u KubeRequest) CreatePersistentVolumeRequest(c *gin.Context) {
+	body := PV{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		u.logger.Error(err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+	pv, err := u.CreatePersistentVolume(body)
+
+	if err != nil {
+		u.logger.Panic(err.Error())
+		c.JSON(400, err.Error())
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"created": pv.Name,
+	})
+}
+
+func (u KubeRequest) CreatePersistentVolumeClaimRequest(c *gin.Context) {
+	body := PVC{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		u.logger.Error(err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+	pvc, err := u.CreatePersistentVolumeClaim(body)
+
+	if err != nil {
+		u.logger.Panic(err.Error())
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"created": pvc.Name,
+	})
+}
+
+func (u KubeRequest) CreateVolumesPodRequest(c *gin.Context) {
+	body := VolumesPod{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		u.logger.Error(err)
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+
+		return
+	}
+	pod, err := u.CreateVolumesPod(body)
+
+	if err != nil {
+		u.logger.Panic(err.Error())
+		c.JSON(400, err.Error())
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"created": pod.Name,
 	})
 }

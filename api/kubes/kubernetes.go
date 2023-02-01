@@ -75,10 +75,6 @@ func (u KubeRequest) CreatePod(podBody PodBody) (*corev1.Pod, error) {
 
 func (u KubeRequest) CreateOrUpdateConfigMap(Map ConfigMapBody) (corev1.ConfigMap, error) {
 	cm := corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      Map.Name,
 			Namespace: Map.Namespace,
@@ -116,4 +112,18 @@ func (u KubeRequest) CreateOrUpdateSecret(s SecretBody) (*corev1.Secret, error) 
 		u.clientset.CoreV1().Secrets(s.Namespace).Update(context.Background(), secret, metav1.UpdateOptions{})
 	}
 	return secret, nil
+}
+
+func (u KubeRequest) CreateNamespace(name string) (*corev1.Namespace, error) {
+	namespace := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+	created_namespace, err := u.clientset.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	} else {
+		return created_namespace, nil
+	}
 }
