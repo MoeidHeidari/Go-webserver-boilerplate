@@ -7,30 +7,30 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// func GetEnvPort(podbody PodBody) int32 {
-// 	var Intport int32
-// 	port, _ := strconv.ParseInt(os.Getenv("KUBE_PORT"), 10, 32)
-// 	Intport = int32(port)
-// 	for i := 0; i < len(podbody.Envs); i++ {
-// 		if podbody.Envs[i].Name == "PORT" {
-// 			port, err := strconv.ParseInt(podbody.Envs[i].Value, 10, 32)
-// 			if err != nil {
-// 				panic(err.Error())
-// 			}
-// 			Intport = int32(port)
-// 		}
-// 	}
-// 	return Intport
-// }
-
 func (u KubeRequest) CreatePod(podBody PodBody) (*corev1.Pod, error) {
 
 	newpod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podBody.Name,
 			Namespace: podBody.Namespace,
+			Labels: map[string]string{
+				"kubernetes.io/hostname": "minikube",
+			},
 		},
 		Spec: corev1.PodSpec{
+			Volumes: []corev1.Volume{
+				{
+					Name: podBody.VolumeName,
+					VolumeSource: corev1.VolumeSource{
+						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+							ClaimName: podBody.ClaimName,
+						},
+					},
+				},
+			},
+			NodeSelector: map[string]string{
+				"kubernetes.io/hostname": "minikube",
+			},
 			Containers: []corev1.Container{
 				{
 					Name:    podBody.ContainerName,
@@ -41,6 +41,12 @@ func (u KubeRequest) CreatePod(podBody PodBody) (*corev1.Pod, error) {
 							HostPort:      podBody.Port,
 							ContainerPort: podBody.Port,
 							Name:          "http",
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
+						{
+							Name:      podBody.VolumeName,
+							MountPath: podBody.MountPath, //"/usr/share/mongo"
 						},
 					},
 					EnvFrom: []corev1.EnvFromSource{
@@ -102,9 +108,6 @@ func (u KubeRequest) CreateOrUpdateSecret(s SecretBody) (*corev1.Secret, error) 
 			Namespace: s.Namespace,
 		},
 		Data: data,
-		// StringData: map[string][]byte{
-		// 	"SecretKey": []byte("Secret key is python"),
-		// },
 	}
 	if _, err := u.clientset.CoreV1().Secrets(s.Namespace).Get(context.TODO(), s.Name, metav1.GetOptions{}); err != nil {
 		u.clientset.CoreV1().Secrets(s.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
@@ -126,4 +129,32 @@ func (u KubeRequest) CreateNamespace(name string) (*corev1.Namespace, error) {
 	} else {
 		return created_namespace, nil
 	}
+}
+
+func (u KubeRequest) CreateNodePort(nodeport Nodeport) (*corev1.Service, error) {
+	nport := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      nodeport.Name,
+			Namespace: nodeport.Namespace,
+			Labels: map[string]string{
+				"kubernetes.io/hostname": "minikube",
+			},
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				{
+					Port: nodeport.Port, NodePort: nodeport.RedirectPort,
+				},
+			},
+			Type: corev1.ServiceTypeNodePort,
+			Selector: map[string]string{
+				"kubernetes.io/hostname": "minikube",
+			},
+		},
+	}
+	service, err := u.clientset.CoreV1().Services(nodeport.Namespace).Create(context.TODO(), nport, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return service, nil
 }

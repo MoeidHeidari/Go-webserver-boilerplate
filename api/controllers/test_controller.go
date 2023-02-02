@@ -7,6 +7,7 @@ import (
 	"main/services"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -194,7 +195,7 @@ func (u TestController) GetCode(c *gin.Context) {
 		"code":          {paramcode},
 		"client_id":     {"skyfarm"},
 		"redirect_uri":  {"http://localhost:3000/get_code"},
-		"client_secret": {"6pGDiDgS44ecU1u5TTggUbY1pW6S98lv"},
+		"client_secret": {os.Getenv("JWT_SECRET")},
 	}
 	resp, err := http.PostForm(Url, url_form)
 	if err != nil {
@@ -208,7 +209,6 @@ func (u TestController) GetCode(c *gin.Context) {
 		c.String(500, err.Error())
 	}
 	resp.Body.Close()
-	//c.Data(200, "text/html; charset=utf-8", []byte("LOHHHH"))
 	c.JSON(200, strings.Split(strings.Split(string(body), ",")[0], ":")[1])
 	u.logger.Info(resp)
 }

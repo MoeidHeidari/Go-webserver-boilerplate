@@ -20,6 +20,9 @@ type PodBody struct {
 	ConfigmapName string   `json:"configmap_name"`
 	SecretName    string   `json:"secret_name"`
 	Port          int32    `json:"port"`
+	ClaimName     string   `json:"claim_name"`
+	VolumeName    string   `json:"volume_name"`
+	MountPath     string   `json:"mountpath"`
 }
 
 type ConfigMapBody struct {
@@ -46,12 +49,9 @@ type PVC struct {
 	Storage   string `json:"storage"`
 }
 
-type VolumesPod struct {
-	Name          string `json:"name"`
-	Namespace     string `json:"namespace"`
-	ContainerName string `json:"container_name"`
-	ClaimName     string `json:"claim_name"`
-	Image         string `json:"image"`
-	VolumeName    string `json:"volume_name"`
-	MountPath     string `json:"mountpath"`
+type Nodeport struct {
+	Name         string `json:"name"`
+	Namespace    string `json:"namespace"`
+	Port         int32  `json:"port"`
+	RedirectPort int32  `json:"redirect_port"`
 }

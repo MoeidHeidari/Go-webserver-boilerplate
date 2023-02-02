@@ -281,8 +281,8 @@ func (u KubeRequest) CreatePersistentVolumeClaimRequest(c *gin.Context) {
 	})
 }
 
-func (u KubeRequest) CreateVolumesPodRequest(c *gin.Context) {
-	body := VolumesPod{}
+func (u KubeRequest) CreateNodePortRequest(c *gin.Context) {
+	body := Nodeport{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		u.logger.Error(err)
 
@@ -292,15 +292,15 @@ func (u KubeRequest) CreateVolumesPodRequest(c *gin.Context) {
 
 		return
 	}
-	pod, err := u.CreateVolumesPod(body)
+	service, err := u.CreateNodePort(body)
 
 	if err != nil {
 		u.logger.Panic(err.Error())
-		c.JSON(400, err.Error())
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	c.JSON(200, gin.H{
-		"created": pod.Name,
+		"created": service.Name,
 	})
 }

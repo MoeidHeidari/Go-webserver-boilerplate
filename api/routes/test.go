@@ -5,8 +5,8 @@ import (
 	"main/api/currencies"
 	"main/api/kubes"
 	"main/api/middlewares"
+	"main/api/ws"
 	"main/lib"
-	"main/ws"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,15 +42,20 @@ func (s TestRoutes) Setup() {
 		api.POST("/kube/create_namespace", s.kubes.CreateNamespaceRequest)
 		api.POST("/kube/create_pv", s.kubes.CreatePersistentVolumeRequest)
 		api.POST("/kube/create_pvc", s.kubes.CreatePersistentVolumeClaimRequest)
-		api.POST("/kube/create_volume_pod", s.kubes.CreateVolumesPodRequest)
+		api.POST("/kube/create_nodeport", s.kubes.CreateNodePortRequest)
 		api.POST("/helm", s.kubes.HCreateReleaseRequest)
 		api.POST("/helm_create_repository", s.kubes.HCreateRepositoryRequest)
 		api.DELETE("/test/:id", s.TestController.DeleteTest)
 		api.DELETE("/kube_delete/:namespace/:pod_name", s.kubes.DeletePodRequest)
 
 	}
+
 	r := gin.Default()
-	r.GET("/", s.Websocket.MessageHandler)
+	websockets_api := r.Group("/ws")
+	{
+		websockets_api.GET("/pod_info", s.Websocket.MessageHandler)
+	}
+	r.GET("/ws", s.Websocket.MessageHandler)
 	go r.Run(":12121")
 
 }

@@ -35,4 +35,7 @@ services:
       ports:
       - "8080:8080"
       - "8443:8443"
+      restart: always
+      volumes:
+      - .local/keycloak/:/opt/jboss/keycloak/standalone/data/
       command: start-dev
