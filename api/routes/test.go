@@ -55,7 +55,6 @@ func (s TestRoutes) Setup() {
 	{
 		websockets_api.GET("/pod_info", s.Websocket.MessageHandler)
 	}
-	r.GET("/ws", s.Websocket.MessageHandler)
 	go r.Run(":12121")
 
 }

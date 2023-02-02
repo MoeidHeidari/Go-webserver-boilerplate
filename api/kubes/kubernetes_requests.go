@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"main/lib"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin" // swagger embed files
 	"helm.sh/helm/v3/pkg/action"
@@ -24,7 +23,6 @@ type KubeRequest struct {
 }
 
 func NewKubeRequest(logger lib.Logger) KubeRequest {
-
 	settings := cli.New()
 	actionConfiguration := new(action.Configuration)
 
@@ -129,8 +127,6 @@ func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
 			"pods count": len(pods.Items),
 			"pods names": names,
 		})
-
-		time.Sleep(10 * time.Second)
 	}
 
 }

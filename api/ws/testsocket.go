@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"encoding/json"
 	"fmt"
 	"main/lib"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type Ws struct {
@@ -37,21 +39,36 @@ func (w Ws) MessageHandler(c *gin.Context) {
 		w.logger.Fatal(err.Error())
 	}
 	defer connection.Close()
+
 	_, pod_name, err := connection.ReadMessage()
 	if err != nil {
 		w.logger.Fatal(err.Error())
 	}
-
-	if err != nil {
-		w.logger.Fatal(err.Error())
-	}
 	k := kubes.NewKubeRequest(w.logger)
-	for {
+	go func() {
+		events := k.GetEvents("default")
+		Watcher := events.ResultChan()
+		fmt.Println(Watcher)
+		for event := range Watcher {
+			item := event.Object.(*corev1.Event)
+			v, err := json.Marshal(item)
+			if err != nil {
+				w.logger.Panic(err.Error())
+			}
+			err = connection.WriteMessage(websocket.TextMessage, v)
+			if err != nil {
+				w.logger.Panic(err.Error())
+			}
+			fmt.Println(v)
+		}
+		events.Stop()
 
+	}()
+
+	for {
 		response := k.GetCurrentPodStatusRequest(string(pod_name))
-		fmt.Println(string(response))
 		err = connection.WriteMessage(websocket.TextMessage, response)
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 1)
 		if err != nil {
 			w.logger.Fatal(err.Error())
 			break
