@@ -2,7 +2,6 @@ package routes
 
 import (
 	"main/api/controllers"
-	"main/api/currencies"
 	"main/api/kubes"
 	"main/api/middlewares"
 	"main/api/ws"
@@ -16,7 +15,6 @@ type TestRoutes struct {
 	logger         lib.Logger
 	handler        lib.RequestHandler
 	TestController controllers.TestController
-	testRequest    currencies.Request
 	authMiddleware middlewares.JWTAuthMiddleware
 	kubes          kubes.KubeRequest
 	Websocket      ws.Ws
@@ -30,11 +28,9 @@ func (s TestRoutes) Setup() {
 	{
 		api.GET("/test", s.TestController.GetTest)
 		api.GET("/test/:id", s.TestController.GetOneTest)
-		api.GET("/currency", s.testRequest.MakeRequest)
 		api.GET("/kube_get", s.kubes.GetPodInfoRequest)
 		api.GET("/helm_get", s.kubes.HGetReleaseRequest)
 		api.POST("/test", s.TestController.CreateTest)
-		api.POST("/currency", s.testRequest.MakePostRequest)
 		api.POST("/test/:id", s.TestController.UpdateTest)
 		api.POST("/kube_add", s.kubes.CreatePodRequest)
 		api.POST("/kube/create_config_map", s.kubes.CreateOrUpdateConfigMapRequest)
@@ -44,17 +40,13 @@ func (s TestRoutes) Setup() {
 		api.POST("/kube/create_pvc", s.kubes.CreatePersistentVolumeClaimRequest)
 		api.POST("/kube/create_nodeport", s.kubes.CreateNodePortRequest)
 		api.POST("/helm", s.kubes.HCreateReleaseRequest)
-		api.POST("/helm_create_repository", s.kubes.HCreateRepositoryRequest)
 		api.DELETE("/test/:id", s.TestController.DeleteTest)
 		api.DELETE("/kube_delete/:namespace/:pod_name", s.kubes.DeletePodRequest)
 
 	}
 
 	r := gin.Default()
-	websockets_api := r.Group("/ws")
-	{
-		websockets_api.GET("/pod_info", s.Websocket.MessageHandler)
-	}
+	r.GET("/", s.Websocket.MessageHandler)
 	go r.Run(":12121")
 
 }
@@ -63,14 +55,12 @@ func (s TestRoutes) Setup() {
 func NewTestRoutes(
 	logger lib.Logger,
 	handler lib.RequestHandler,
-	testRequest currencies.Request,
 	TestController controllers.TestController,
 	kubes kubes.KubeRequest,
 ) TestRoutes {
 	return TestRoutes{
 		handler:        handler,
 		logger:         logger,
-		testRequest:    testRequest,
 		TestController: TestController,
 		kubes:          kubes,
 	}

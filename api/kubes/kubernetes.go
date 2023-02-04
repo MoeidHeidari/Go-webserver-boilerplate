@@ -70,7 +70,7 @@ func (u KubeRequest) CreatePod(podBody PodBody) (*corev1.Pod, error) {
 		},
 	}
 
-	pod, err := u.clientset.CoreV1().Pods(podBody.Namespace).Create(context.TODO(), newpod, metav1.CreateOptions{})
+	pod, err := u.Clientset.CoreV1().Pods(podBody.Namespace).Create(context.TODO(), newpod, metav1.CreateOptions{})
 
 	if err != nil {
 		return nil, err
@@ -87,10 +87,10 @@ func (u KubeRequest) CreateOrUpdateConfigMap(Map ConfigMapBody) (corev1.ConfigMa
 		},
 		Data: Map.Data,
 	}
-	if _, err := u.clientset.CoreV1().ConfigMaps(Map.Namespace).Get(context.TODO(), Map.Name, metav1.GetOptions{}); err != nil {
-		u.clientset.CoreV1().ConfigMaps(Map.Namespace).Create(context.Background(), &cm, metav1.CreateOptions{})
+	if _, err := u.Clientset.CoreV1().ConfigMaps(Map.Namespace).Get(context.TODO(), Map.Name, metav1.GetOptions{}); err != nil {
+		u.Clientset.CoreV1().ConfigMaps(Map.Namespace).Create(context.Background(), &cm, metav1.CreateOptions{})
 	} else {
-		u.clientset.CoreV1().ConfigMaps(Map.Namespace).Update(context.Background(), &cm, metav1.UpdateOptions{})
+		u.Clientset.CoreV1().ConfigMaps(Map.Namespace).Update(context.Background(), &cm, metav1.UpdateOptions{})
 	}
 	return cm, nil
 }
@@ -109,10 +109,10 @@ func (u KubeRequest) CreateOrUpdateSecret(s SecretBody) (*corev1.Secret, error) 
 		},
 		Data: data,
 	}
-	if _, err := u.clientset.CoreV1().Secrets(s.Namespace).Get(context.TODO(), s.Name, metav1.GetOptions{}); err != nil {
-		u.clientset.CoreV1().Secrets(s.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+	if _, err := u.Clientset.CoreV1().Secrets(s.Namespace).Get(context.TODO(), s.Name, metav1.GetOptions{}); err != nil {
+		u.Clientset.CoreV1().Secrets(s.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
 	} else {
-		u.clientset.CoreV1().Secrets(s.Namespace).Update(context.Background(), secret, metav1.UpdateOptions{})
+		u.Clientset.CoreV1().Secrets(s.Namespace).Update(context.Background(), secret, metav1.UpdateOptions{})
 	}
 	return secret, nil
 }
@@ -123,7 +123,7 @@ func (u KubeRequest) CreateNamespace(name string) (*corev1.Namespace, error) {
 			Name: name,
 		},
 	}
-	created_namespace, err := u.clientset.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{})
+	created_namespace, err := u.Clientset.CoreV1().Namespaces().Create(context.Background(), namespace, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	} else {
@@ -152,7 +152,7 @@ func (u KubeRequest) CreateNodePort(nodeport Nodeport) (*corev1.Service, error) 
 			},
 		},
 	}
-	service, err := u.clientset.CoreV1().Services(nodeport.Namespace).Create(context.TODO(), nport, metav1.CreateOptions{})
+	service, err := u.Clientset.CoreV1().Services(nodeport.Namespace).Create(context.TODO(), nport, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}

@@ -39,26 +39,3 @@ func (u KubeRequest) HGetReleaseRequest(c *gin.Context) {
 	}
 	c.JSON(200, results)
 }
-
-func (u KubeRequest) HCreateRepositoryRequest(c *gin.Context) {
-	body := RepositoryBody{}
-	if err := c.ShouldBindJSON(&body); err != nil {
-		u.logger.Error(err)
-
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-
-		return
-	}
-	index, err := u.HCreateRepository(body)
-	if err != nil {
-		u.logger.Panic(err.Error())
-
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"message": index,
-	})
-}

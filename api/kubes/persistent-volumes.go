@@ -28,7 +28,7 @@ func (u KubeRequest) CreatePersistentVolume(persistentVolume PV) (*corev1.Persis
 			}},
 		},
 	}
-	Pv, err := u.clientset.CoreV1().PersistentVolumes().Create(context.Background(), pv, metav1.CreateOptions{})
+	Pv, err := u.Clientset.CoreV1().PersistentVolumes().Create(context.Background(), pv, metav1.CreateOptions{})
 	if err != nil {
 		u.logger.Panic(err.Error())
 		return nil, err
@@ -56,7 +56,7 @@ func (u KubeRequest) CreatePersistentVolumeClaim(persistentVolumeClaim PVC) (*co
 			},
 		},
 	}
-	pvc, err := u.clientset.CoreV1().PersistentVolumeClaims(persistentVolumeClaim.Namespace).Create(context.Background(), pvc, metav1.CreateOptions{})
+	pvc, err := u.Clientset.CoreV1().PersistentVolumeClaims(persistentVolumeClaim.Namespace).Create(context.Background(), pvc, metav1.CreateOptions{})
 	if err != nil {
 		u.logger.Panic(err.Error())
 		return nil, err

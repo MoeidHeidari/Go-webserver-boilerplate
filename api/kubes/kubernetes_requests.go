@@ -17,7 +17,7 @@ import (
 
 type KubeRequest struct {
 	logger              lib.Logger
-	clientset           *kubernetes.Clientset
+	Clientset           *kubernetes.Clientset
 	settings            *cli.EnvSettings
 	actionConfiguration *action.Configuration
 }
@@ -26,7 +26,7 @@ func NewKubeRequest(logger lib.Logger) KubeRequest {
 	settings := cli.New()
 	actionConfiguration := new(action.Configuration)
 
-	clientset, err := clientsetInit()
+	Clientset, err := ClientsetInit()
 
 	if err != nil {
 		panic(err.Error())
@@ -34,13 +34,13 @@ func NewKubeRequest(logger lib.Logger) KubeRequest {
 
 	return KubeRequest{
 		logger:              logger,
-		clientset:           clientset,
+		Clientset:           Clientset,
 		settings:            settings,
 		actionConfiguration: actionConfiguration,
 	}
 }
 
-func clientsetInit() (*kubernetes.Clientset, error) {
+func ClientsetInit() (*kubernetes.Clientset, error) {
 	rules := clientcmd.NewDefaultClientConfigLoadingRules()
 	kubeconfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{})
 	config, err := kubeconfig.ClientConfig()
@@ -49,13 +49,13 @@ func clientsetInit() (*kubernetes.Clientset, error) {
 		return nil, err
 	}
 
-	clientset, err := kubernetes.NewForConfig(config)
+	Clientset, err := kubernetes.NewForConfig(config)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return clientset, err
+	return Clientset, err
 }
 
 // @Summary Create a pod
@@ -96,7 +96,7 @@ func (u KubeRequest) CreatePodRequest(c *gin.Context) {
 	})
 }
 
-// @Summary Get pod info
+// @Summary Get pod info/*  */
 // @Tags kubernetes
 // @Accept json
 // @Produce json
@@ -105,15 +105,17 @@ func (u KubeRequest) CreatePodRequest(c *gin.Context) {
 // @Router /api/kube_get [post]
 func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
 
-	nodelist, err := u.clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	nodelist, err := u.Clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		u.logger.Panic(err.Error())
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	for _, n := range nodelist.Items {
-		pods, err := u.clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
+		pods, err := u.Clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
 
 		if err != nil {
 			u.logger.Panic(err.Error())
+			c.JSON(http.StatusInternalServerError, err.Error())
 		}
 
 		var names []string = make([]string, len(pods.Items))
@@ -133,14 +135,16 @@ func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
 
 func (u KubeRequest) GetCurrentPodStatusRequest(pod_name string) []byte {
 
-	pod, err := u.clientset.CoreV1().Pods("default").Get(context.Background(), pod_name, metav1.GetOptions{})
+	pod, err := u.Clientset.CoreV1().Pods("default").Get(context.Background(), pod_name, metav1.GetOptions{})
 	if err != nil {
 		u.logger.Panic(err.Error())
+		return nil
 	}
 	status, err := json.Marshal(pod.Status)
 
 	if err != nil {
 		u.logger.Panic(err.Error())
+		return nil
 	}
 	return status
 }
@@ -149,7 +153,7 @@ func (u KubeRequest) DeletePodRequest(c *gin.Context) {
 	pod_name := c.Param("pod_name")
 	namespace := c.Param("namespace")
 
-	err := u.clientset.CoreV1().Pods(namespace).Delete(context.TODO(), pod_name, metav1.DeleteOptions{})
+	err := u.Clientset.CoreV1().Pods(namespace).Delete(context.TODO(), pod_name, metav1.DeleteOptions{})
 
 	if err != nil {
 		c.JSON(404, "pod not found")

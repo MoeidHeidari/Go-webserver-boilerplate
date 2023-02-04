@@ -6,9 +6,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
-	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
-	"helm.sh/helm/v3/pkg/repo"
 )
 
 // Gets release in Helm
@@ -24,18 +22,6 @@ func (u KubeRequest) HGetRelease() ([]*release.Release, error) {
 	}
 	return results, nil
 
-}
-
-func (u KubeRequest) HCreateRepository(repoBody RepositoryBody) ([]string, error) {
-	r, err := repo.NewChartRepository(&repo.Entry{
-		Name: repoBody.Name,
-		URL:  repoBody.Url,
-	}, getter.All(u.settings))
-	if err != nil {
-		return nil, err
-	}
-	s := r.ChartPaths
-	return s, nil
 }
 
 func (u KubeRequest) HCreateRelease(chartBody ChartBody) (*release.Release, error) {

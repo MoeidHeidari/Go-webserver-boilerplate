@@ -1,93 +1,133 @@
-package kubes
+package kubes_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
+	"main/api/kubes"
 	"main/lib"
 	"math/rand"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/bxcodec/faker/v4"
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestGetPodInfo(t *testing.T) {
-	router := gin.Default()
-	k := NewKubeRequest(lib.Logger{})
-	router.GET("/test", k.GetPodInfoRequest)
-	req, _ := http.NewRequest("GET", "/test", nil)
-	resp := httptest.NewRecorder()
-	router.ServeHTTP(resp, req)
-	assert.Equal(t, 200, resp.Code)
+type test struct {
+	ConfigmapName string
+	SecretName    string
+	Namespace     string
+	NodeportName  string
+	PodName       string
+	PVName        string
+	PVCName       string
+}
+
+var Test = test{
+	ConfigmapName: faker.Word(),
+	SecretName:    faker.Word(),
+	Namespace:     faker.Word(),
+	NodeportName:  faker.Word(),
+	PodName:       faker.Word(),
+	PVName:        faker.Word(),
+	PVCName:       faker.Word(),
+}
+
+func DeleteAll() {
+	u := kubes.NewKubeRequest(lib.Logger{})
+	err := u.Clientset.CoreV1().Pods("default").Delete(context.TODO(), Test.PodName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), Test.PVCName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), Test.PVName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.CoreV1().Services("default").Delete(context.Background(), Test.NodeportName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.CoreV1().Secrets("default").Delete(context.Background(), Test.SecretName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.CoreV1().Namespaces().Delete(context.Background(), Test.Namespace, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.CoreV1().ConfigMaps("default").Delete(context.Background(), Test.ConfigmapName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
 func TestConfigMapCreate(t *testing.T) {
-	var configmapbody ConfigMapBody
+	configmapbody := kubes.ConfigMapBody{}
 	err := faker.FakeData(&configmapbody.Data)
 	if err != nil {
 		panic(err.Error())
 	}
-	configmapbody.Name = faker.Word()
+	configmapbody.Name = Test.ConfigmapName
 	configmapbody.Namespace = "default"
-	u := NewKubeRequest(lib.Logger{})
+	u := kubes.NewKubeRequest(lib.Logger{})
 	cm, err := u.CreateOrUpdateConfigMap(configmapbody)
 	assert.Nil(t, err)
 	assert.NotNil(t, cm)
-	get_cm, err := u.clientset.CoreV1().ConfigMaps("default").Get(context.Background(), configmapbody.Name, metav1.GetOptions{})
+	get_cm, err := u.Clientset.CoreV1().ConfigMaps("default").Get(context.Background(), configmapbody.Name, metav1.GetOptions{})
 	assert.Nil(t, err)
 	assert.Equal(t, get_cm.Labels, cm.Labels)
+
 }
 
-func TestNamespace(t *testing.T) {
-	namespace_name := faker.Word()
-	u := NewKubeRequest(lib.Logger{})
+func TestNamespaceCreate(t *testing.T) {
+	namespace_name := Test.Namespace
+	u := kubes.NewKubeRequest(lib.Logger{})
 	namespace, err := u.CreateNamespace(namespace_name)
 	assert.Nil(t, err)
 	assert.Equal(t, namespace_name, namespace.Name)
 }
 
 func TestSercetCreate(t *testing.T) {
-	var secretbody SecretBody
+	secretbody := kubes.SecretBody{}
 	err := faker.FakeData(&secretbody.Data)
+
 	if err != nil {
 		panic(err.Error())
 	}
-	secretbody.Name = faker.Word()
+
+	secretbody.Name = Test.SecretName
 	secretbody.Namespace = "default"
-	u := NewKubeRequest(lib.Logger{})
+	u := kubes.NewKubeRequest(lib.Logger{})
 	s, err := u.CreateOrUpdateSecret(secretbody)
 	assert.Nil(t, err)
 	assert.NotNil(t, s)
-	get_secretbody, err := u.clientset.CoreV1().Secrets("default").Get(context.Background(), secretbody.Name, metav1.GetOptions{})
+	get_secretbody, err := u.Clientset.CoreV1().Secrets("default").Get(context.Background(), secretbody.Name, metav1.GetOptions{})
 	assert.Nil(t, err)
 	assert.Equal(t, get_secretbody.Labels, s.Labels)
-
 }
 
-func TestCreateNodePort(t *testing.T) {
-	var nodeportbody Nodeport
-	nodeportbody.Name = faker.Word()
+func TestNodePortCreate(t *testing.T) {
+	nodeportbody := kubes.Nodeport{}
+	nodeportbody.Name = Test.NodeportName
 	nodeportbody.Namespace = "default"
 	nodeportbody.RedirectPort = int32(rand.Intn(32767-30000) + 30000)
 	nodeportbody.Port = int32(rand.Intn(30000-20000) + 20000)
-	u := NewKubeRequest(lib.Logger{})
+	u := kubes.NewKubeRequest(lib.Logger{})
 	service, err := u.CreateNodePort(nodeportbody)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
-	checkservice, err := u.clientset.CoreV1().Services("default").Get(context.Background(), nodeportbody.Name, metav1.GetOptions{})
+	checkservice, err := u.Clientset.CoreV1().Services("default").Get(context.Background(), nodeportbody.Name, metav1.GetOptions{})
 	assert.Nil(t, err)
 	assert.Equal(t, checkservice.UID, service.UID)
+
 }
 
-func TestCreatePod(t *testing.T) {
-	var podBody PodBody
-	podBody.Name = faker.Word()
+func TestPodCreate(t *testing.T) {
+	podBody := kubes.PodBody{}
+	podBody.Name = Test.PodName
 	podBody.Namespace = "default"
 	podBody.ClaimName = faker.Word()
 	podBody.VolumeName = faker.Word()
@@ -97,74 +137,87 @@ func TestCreatePod(t *testing.T) {
 	podBody.Port = int32(rand.Intn(30000-20000) + 20000)
 	podBody.MountPath = faker.URL()
 	podBody.ConfigmapName = faker.Word()
-	u := NewKubeRequest(lib.Logger{})
+	u := kubes.NewKubeRequest(lib.Logger{})
 	pod, err := u.CreatePod(podBody)
 	assert.Nil(t, err)
 	assert.NotNil(t, pod)
-	checkpod, err := u.clientset.CoreV1().Pods("default").Get(context.TODO(), podBody.Name, metav1.GetOptions{})
+	checkpod, err := u.Clientset.CoreV1().Pods("default").Get(context.TODO(), podBody.Name, metav1.GetOptions{})
 	assert.Nil(t, err)
 	assert.Equal(t, checkpod.UID, pod.UID)
+
 }
 
-func TestCreatePV(t *testing.T) {
-	var pv PV
-	pv.Name = faker.Word()
+func TestPVCreate(t *testing.T) {
+	pv := kubes.PV{}
+	pv.Name = Test.PVName
 	pv.Path = faker.Word()
 	pv.Storage = "1Gi"
-	u := NewKubeRequest(lib.Logger{})
+	u := kubes.NewKubeRequest(lib.Logger{})
 	persistent_volume, err := u.CreatePersistentVolume(pv)
 	assert.Nil(t, err)
 	assert.NotNil(t, persistent_volume)
-	pvcheck, err := u.clientset.CoreV1().PersistentVolumes().Get(context.TODO(), pv.Name, metav1.GetOptions{})
+	pvcheck, err := u.Clientset.CoreV1().PersistentVolumes().Get(context.TODO(), pv.Name, metav1.GetOptions{})
 	assert.Nil(t, err)
 	assert.Equal(t, pvcheck.UID, persistent_volume.UID)
 }
 
-func TestCreatePVC(t *testing.T) {
-	var pvc PVC
-	pvc.Name = faker.Word()
+func TestPVCCreate(t *testing.T) {
+	pvc := kubes.PVC{}
+	pvc.Name = Test.PVCName
 	pvc.Namespace = "default"
 	pvc.Storage = "1Gi"
-	u := NewKubeRequest(lib.Logger{})
+	u := kubes.NewKubeRequest(lib.Logger{})
 	persistent_volume_claim, err := u.CreatePersistentVolumeClaim(pvc)
 	assert.Nil(t, err)
 	assert.NotNil(t, persistent_volume_claim)
-	pvccheck, err := u.clientset.CoreV1().PersistentVolumeClaims("default").Get(context.TODO(), pvc.Name, metav1.GetOptions{})
+	pvccheck, err := u.Clientset.CoreV1().PersistentVolumeClaims("default").Get(context.TODO(), pvc.Name, metav1.GetOptions{})
 	assert.Nil(t, err)
 	assert.Equal(t, pvccheck.UID, persistent_volume_claim.UID)
 }
 
-func TestCreatePodRequest(t *testing.T) {
-	w := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(w)
-	ctx.Request = &http.Request{
-		Header: make(http.Header),
-	}
-	MockJsonPost(ctx, map[string]interface{}{
-
-		"command":        "[]",
-		"configmap_name": "conff",
-		"port":           27017,
-		"secret_name":    "secrr",
-		"name":           "mongos",
-		"namespace":      "default",
-		"container_name": "mongo-container",
-		"claim_name":     "mongo-pvc",
-		"image":          "mongo",
-		"volume_name":    "mongodb-data",
-		"mountpath":      "/usr/share/mongo",
-	})
-	u := NewKubeRequest(lib.Logger{})
-	u.CreatePodRequest(ctx)
-	assert.Equal(t, http.StatusOK, w.Code)
+func TestGetEvents(t *testing.T) {
+	namespace := "default"
+	u := kubes.NewKubeRequest(lib.Logger{})
+	events := u.GetEvents(namespace)
+	assert.NotNil(t, events)
 }
 
-func MockJsonPost(c *gin.Context, content interface{}) {
-	c.Request.Method = "POST"
-	c.Request.Header.Set("Content-Type", "application/json")
-	jsonbytes, err := json.Marshal(content)
+func TestGetCurrentPodStatus(t *testing.T) {
+	u := kubes.NewKubeRequest(lib.Logger{})
+	resp := u.GetCurrentPodStatusRequest("mongo")
+	assert.NotNil(t, resp)
+}
+
+func TestClientSetInit(t *testing.T) {
+	clientset, err := kubes.ClientsetInit()
+	assert.Nil(t, err)
+	assert.NotNil(t, clientset)
+}
+
+func TestHCreateRelease(t *testing.T) {
+	chart := kubes.ChartBody{}
+	chart.Namespace = "default"
+	chart.ReleaseName = faker.Word()
+	chart.ChartPath = "https://charts.bitnami.com/bitnami/keycloak-13.0.2.tgz"
+	u := kubes.NewKubeRequest(lib.Logger{})
+	release, err := u.HCreateRelease(chart)
 	if err != nil {
 		panic(err.Error())
 	}
-	c.Request.Body = io.NopCloser(bytes.NewBuffer(jsonbytes))
+	assert.Nil(t, err)
+	assert.NotNil(t, release)
+
+}
+
+func TestHGetRelease(t *testing.T) {
+	u := kubes.NewKubeRequest(lib.Logger{})
+	results, err := u.HGetRelease()
+	assert.Nil(t, err)
+	assert.NotNil(t, results)
+}
+
+func TestMain(m *testing.M) {
+	m.Run()
+	DeleteAll()
+	DeleteAllReq()
 }
