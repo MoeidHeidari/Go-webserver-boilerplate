@@ -74,20 +74,16 @@ func (u KubeRequest) CreatePodRequest(c *gin.Context) {
 	body := PodBody{}
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		u.logger.Error(err)
-
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
-
 		return
 	}
 
 	pod, err := u.CreatePod(body)
 
 	if err != nil {
-		u.logger.Panic(err.Error())
-
+		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 
@@ -107,14 +103,12 @@ func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
 
 	nodelist, err := u.Clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		u.logger.Panic(err.Error())
 		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	for _, n := range nodelist.Items {
 		pods, err := u.Clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
 
 		if err != nil {
-			u.logger.Panic(err.Error())
 			c.JSON(http.StatusInternalServerError, err.Error())
 		}
 
@@ -137,13 +131,11 @@ func (u KubeRequest) GetCurrentPodStatusRequest(pod_name string) []byte {
 
 	pod, err := u.Clientset.CoreV1().Pods("default").Get(context.Background(), pod_name, metav1.GetOptions{})
 	if err != nil {
-		u.logger.Panic(err.Error())
 		return nil
 	}
 	status, err := json.Marshal(pod.Status)
 
 	if err != nil {
-		u.logger.Panic(err.Error())
 		return nil
 	}
 	return status
@@ -168,8 +160,6 @@ func (u KubeRequest) DeletePodRequest(c *gin.Context) {
 func (u KubeRequest) CreateOrUpdateConfigMapRequest(c *gin.Context) {
 	body := ConfigMapBody{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		u.logger.Error(err)
-
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -179,7 +169,6 @@ func (u KubeRequest) CreateOrUpdateConfigMapRequest(c *gin.Context) {
 	configmap, err := u.CreateOrUpdateConfigMap(body)
 
 	if err != nil {
-		u.logger.Panic(err.Error())
 		c.JSON(400, err.Error())
 		return
 	}
@@ -192,8 +181,6 @@ func (u KubeRequest) CreateOrUpdateConfigMapRequest(c *gin.Context) {
 func (u KubeRequest) CreateOrUpdateSecretRequest(c *gin.Context) {
 	body := SecretBody{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		u.logger.Error(err)
-
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -203,7 +190,6 @@ func (u KubeRequest) CreateOrUpdateSecretRequest(c *gin.Context) {
 	secret, err := u.CreateOrUpdateSecret(body)
 
 	if err != nil {
-		u.logger.Panic(err.Error())
 		c.JSON(400, err.Error())
 		return
 	}
@@ -216,14 +202,12 @@ func (u KubeRequest) CreateOrUpdateSecretRequest(c *gin.Context) {
 func (u KubeRequest) CreateNamespaceRequest(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		u.logger.Panic(err.Error())
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
 	namespace, err := u.CreateNamespace(string(body))
 
 	if err != nil {
-		u.logger.Panic(err.Error())
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -236,8 +220,6 @@ func (u KubeRequest) CreateNamespaceRequest(c *gin.Context) {
 func (u KubeRequest) CreatePersistentVolumeRequest(c *gin.Context) {
 	body := PV{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		u.logger.Error(err)
-
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -247,7 +229,6 @@ func (u KubeRequest) CreatePersistentVolumeRequest(c *gin.Context) {
 	pv, err := u.CreatePersistentVolume(body)
 
 	if err != nil {
-		u.logger.Panic(err.Error())
 		c.JSON(400, err.Error())
 		return
 	}
@@ -260,8 +241,6 @@ func (u KubeRequest) CreatePersistentVolumeRequest(c *gin.Context) {
 func (u KubeRequest) CreatePersistentVolumeClaimRequest(c *gin.Context) {
 	body := PVC{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		u.logger.Error(err)
-
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -271,7 +250,6 @@ func (u KubeRequest) CreatePersistentVolumeClaimRequest(c *gin.Context) {
 	pvc, err := u.CreatePersistentVolumeClaim(body)
 
 	if err != nil {
-		u.logger.Panic(err.Error())
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -284,8 +262,6 @@ func (u KubeRequest) CreatePersistentVolumeClaimRequest(c *gin.Context) {
 func (u KubeRequest) CreateNodePortRequest(c *gin.Context) {
 	body := Nodeport{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		u.logger.Error(err)
-
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -295,7 +271,6 @@ func (u KubeRequest) CreateNodePortRequest(c *gin.Context) {
 	service, err := u.CreateNodePort(body)
 
 	if err != nil {
-		u.logger.Panic(err.Error())
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
