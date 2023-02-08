@@ -25,7 +25,7 @@ func (u KubeRequest) HCreateReleaseRequest(c *gin.Context) {
 func (u KubeRequest) HGetReleaseRequest(c *gin.Context) {
 	results, err := u.HGetRelease()
 	if err != nil || results == nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
+		c.JSON(http.StatusInternalServerError, err)
 	}
 	c.JSON(200, results)
 }

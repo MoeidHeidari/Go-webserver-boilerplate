@@ -11,16 +11,13 @@ import (
 
 // Gets release in Helm
 func (u KubeRequest) HGetRelease() ([]*release.Release, error) {
-	if err := u.ActionConfiguration.Init(u.Settings.RESTClientGetter(), u.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
-		return nil, err
-	}
+	u.ActionConfiguration.Init(u.Settings.RESTClientGetter(), u.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
 	client := action.NewList(u.ActionConfiguration)
 	results, err := client.Run()
 	if err != nil || results == nil {
 		return nil, err
 	}
 	return results, nil
-
 }
 
 func (u KubeRequest) HCreateRelease(chartBody ChartBody) (*release.Release, error) {

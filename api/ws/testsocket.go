@@ -46,9 +46,11 @@ func (w Ws) MessageHandler(c *gin.Context) {
 	}
 	k := kubes.NewKubeRequest(w.logger)
 	go func() {
-		events := k.GetEvents("default")
+		events, err := k.GetEvents("default")
+		if err != nil {
+			w.logger.Panic(err.Error())
+		}
 		Watcher := events.ResultChan()
-		fmt.Println(Watcher)
 		for event := range Watcher {
 			item := event.Object.(*corev1.Event)
 			v, err := json.Marshal(item)

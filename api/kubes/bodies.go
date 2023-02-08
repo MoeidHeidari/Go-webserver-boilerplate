@@ -4,6 +4,7 @@ type ChartBody struct {
 	ChartPath   string `json:"chart_path"`
 	Namespace   string `json:"namespace"`
 	ReleaseName string `json:"release_name"`
+	Reponame    string `json:"repo_name"`
 }
 
 type RepositoryBody struct {

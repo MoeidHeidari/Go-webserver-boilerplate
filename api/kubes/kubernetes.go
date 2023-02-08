@@ -88,7 +88,10 @@ func (u KubeRequest) CreateOrUpdateConfigMap(Map ConfigMapBody) (corev1.ConfigMa
 		Data: Map.Data,
 	}
 	if _, err := u.Clientset.CoreV1().ConfigMaps(Map.Namespace).Get(context.TODO(), Map.Name, metav1.GetOptions{}); err != nil {
-		u.Clientset.CoreV1().ConfigMaps(Map.Namespace).Create(context.Background(), &cm, metav1.CreateOptions{})
+		_, err := u.Clientset.CoreV1().ConfigMaps(Map.Namespace).Create(context.Background(), &cm, metav1.CreateOptions{})
+		if err != nil {
+			return cm, err
+		}
 	} else {
 		u.Clientset.CoreV1().ConfigMaps(Map.Namespace).Update(context.Background(), &cm, metav1.UpdateOptions{})
 	}
@@ -110,7 +113,10 @@ func (u KubeRequest) CreateOrUpdateSecret(s SecretBody) (*corev1.Secret, error) 
 		Data: data,
 	}
 	if _, err := u.Clientset.CoreV1().Secrets(s.Namespace).Get(context.TODO(), s.Name, metav1.GetOptions{}); err != nil {
-		u.Clientset.CoreV1().Secrets(s.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+		_, err := u.Clientset.CoreV1().Secrets(s.Namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+		if err != nil {
+			return secret, err
+		}
 	} else {
 		u.Clientset.CoreV1().Secrets(s.Namespace).Update(context.Background(), secret, metav1.UpdateOptions{})
 	}

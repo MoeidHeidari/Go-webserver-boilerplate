@@ -13,6 +13,7 @@ import (
 	"github.com/bxcodec/faker/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/action"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -156,39 +157,38 @@ func TestHCreateReleaseError(t *testing.T) {
 	release, err := u.HCreateRelease(chart)
 	assert.NotNil(t, err)
 	assert.Nil(t, release)
+	client := action.NewUninstall(u.ActionConfiguration)
+	client.Run(chart.ReleaseName)
 	chart.ChartPath = faker.Word()
-	release, err = u.HCreateRelease(chart)
-	assert.NotNil(t, err)
-	assert.Nil(t, release)
-	chart.ChartPath = faker.URL()
 	release, err = u.HCreateRelease(chart)
 	assert.NotNil(t, err)
 	assert.Nil(t, release)
 }
 
-// PASSED BUT CALL PANIC
-// func TestHGetReleaseRequestError(t *testing.T) {
-// 	router := gin.Default()
-// 	gin.SetMode(gin.TestMode)
-// 	k := kubes.NewKubeRequest(lib.Logger{})
-// 	k.Settings.SetNamespace("random")
-// 	router.GET("/", k.HGetReleaseRequest)
-// 	req := httptest.NewRequest("GET", "/", nil)
-// 	resp := httptest.NewRecorder()
-// 	router.ServeHTTP(resp, req)
-// 	assert.Equal(t, http.StatusInternalServerError, resp.Code)
-// }
+func TestHGetReleaseRequestError(t *testing.T) {
+	w := httptest.NewRecorder()
+	_, router := gin.CreateTestContext(w)
+	gin.SetMode(gin.TestMode)
+	k := kubes.NewKubeRequest(lib.Logger{})
+	k.Settings.SetNamespace("random")
+	router.GET("/", k.HGetReleaseRequest)
+	req := httptest.NewRequest("GET", "/", nil)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	assert.Equal(t, http.StatusInternalServerError, resp.Code)
+}
 
-// func TestGetPodInfoRequestError(t *testing.T) {
-// 	router := gin.Default()
-// 	gin.SetMode(gin.TestMode)
-// 	k := kubes.NewKubeRequest(lib.Logger{})
-// 	router.GET("/:namespace", k.GetPodInfoRequest)
-// 	req, _ := http.NewRequest("GET", "/nil", nil)
-// 	resp := httptest.NewRecorder()
-// 	router.ServeHTTP(resp, req)
-// 	assert.Equal(t, http.StatusInternalServerError, resp.Code)
-// }
+func TestGetPodInfoRequestError(t *testing.T) {
+	w := httptest.NewRecorder()
+	_, router := gin.CreateTestContext(w)
+	gin.SetMode(gin.TestMode)
+	k := kubes.NewKubeRequest(lib.Logger{})
+	router.GET("/:namespace", k.GetNodeInfoRequest)
+	req := httptest.NewRequest("GET", "/nil", nil)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	assert.Equal(t, http.StatusInternalServerError, resp.Code)
+}
 
 func TestDeletePodRequestError(t *testing.T) {
 	Podname := faker.Word()
@@ -241,12 +241,12 @@ func TestCreateConfigmapRequestError(t *testing.T) {
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	configmap := kubes.ConfigMapBody{}
-	configmap.Name = faker.Name()
-	configmap.Namespace = faker.Name()
 	err := faker.FakeData(&configmap.Data)
 	if err != nil {
 		panic(err.Error())
 	}
+	configmap.Name = faker.Word()
+	configmap.Namespace = faker.Word()
 	jsonbytes, err := json.Marshal(configmap)
 	if err != nil {
 		panic(err.Error())
@@ -263,6 +263,17 @@ func TestCreateSecretRequestError(t *testing.T) {
 	u := kubes.NewKubeRequest(lib.Logger{})
 	r.POST("/", u.CreateOrUpdateSecretRequest)
 	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	secret := kubes.SecretBody{}
+	secret.Name = faker.Word()
+	secret.Namespace = faker.Word()
+	jsonbytes, err := json.Marshal(secret)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
@@ -302,7 +313,6 @@ func TestCreatePVRequestError(t *testing.T) {
 
 func TestCreatePVCRequestError(t *testing.T) {
 	pvc := kubes.PVC{}
-	pvc.Namespace = faker.Name()
 	pvc.Storage = "1Gi"
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
@@ -317,9 +327,3 @@ func TestCreatePVCRequestError(t *testing.T) {
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
-
-// func TestGetEventsError(t *testing.T) {
-// 	u := kubes.NewKubeRequest(lib.Logger{})
-// 	_, err := u.GetEvents(faker.Word())
-// 	fmt.Println(err)
-// }

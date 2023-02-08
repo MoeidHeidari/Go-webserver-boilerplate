@@ -87,7 +87,7 @@ func TestGetPodInfo(t *testing.T) {
 	router := gin.Default()
 	gin.SetMode(gin.TestMode)
 	k := kubes.NewKubeRequest(lib.Logger{})
-	router.GET("/:namespace", k.GetPodInfoRequest)
+	router.GET("/:namespace", k.GetNodeInfoRequest)
 	req, _ := http.NewRequest("GET", "/default", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)

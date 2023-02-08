@@ -93,7 +93,7 @@ func (u KubeRequest) CreatePodRequest(c *gin.Context) {
 // @Description Post request
 // @Security ApiKeyAuth
 // @Router /api/kube_get [post]
-func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
+func (u KubeRequest) GetNodeInfoRequest(c *gin.Context) {
 	namespace := c.Param("namespace")
 	nodelist, err := u.Clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
@@ -101,19 +101,20 @@ func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
 	}
 	for _, n := range nodelist.Items {
 		pods, err := u.Clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
-
-		var names []string = make([]string, len(pods.Items))
-
-		for i := 0; i < len(pods.Items); i++ {
-			names[i] = pods.Items[i].Name
-		}
 		if err != nil || len(pods.Items) == 0 {
-			c.JSON(http.StatusInternalServerError, err.Error())
+			c.JSON(http.StatusInternalServerError, err)
+		} else {
+			var names []string = make([]string, len(pods.Items))
+
+			for i := 0; i < len(pods.Items); i++ {
+				names[i] = pods.Items[i].Name
+			}
+
+			c.JSON(200, gin.H{
+				"node name":  n.Name,
+				"pods names": names,
+			})
 		}
-		c.JSON(200, gin.H{
-			"node name":  n.Name,
-			"pods names": names,
-		})
 	}
 
 }

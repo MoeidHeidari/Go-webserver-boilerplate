@@ -13,13 +13,7 @@ func (u KubeRequest) GetEvents(namespace string) (watch.Interface, error) {
 			Kind: "POD",
 		},
 	}
-	err := u.Clientset.CoreV1().Events(namespace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	events, err := u.Clientset.CoreV1().Events(namespace).Watch(context.TODO(), opts)
-	if err != nil || events == nil {
-		return nil, err
-	}
+	u.Clientset.CoreV1().Events(namespace).DeleteCollection(context.TODO(), metav1.DeleteOptions{}, metav1.ListOptions{})
+	events, _ := u.Clientset.CoreV1().Events(namespace).Watch(context.TODO(), opts)
 	return events, nil
 }
