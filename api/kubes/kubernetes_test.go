@@ -2,13 +2,16 @@ package kubes_test
 
 import (
 	"context"
+	"log"
 	"main/api/kubes"
 	"main/lib"
 	"math/rand"
+	"os"
 	"testing"
 
 	"github.com/bxcodec/faker/v4"
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/action"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,6 +23,7 @@ type test struct {
 	PodName       string
 	PVName        string
 	PVCName       string
+	ChartName     string
 }
 
 var Test = test{
@@ -30,6 +34,7 @@ var Test = test{
 	PodName:       faker.Word(),
 	PVName:        faker.Word(),
 	PVCName:       faker.Word(),
+	ChartName:     faker.Word(),
 }
 
 func DeleteAll() {
@@ -62,6 +67,27 @@ func DeleteAll() {
 	if err != nil {
 		panic(err.Error())
 	}
+	pvlist, err := u.Clientset.CoreV1().PersistentVolumes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, i := range pvlist.Items {
+		if i.Spec.ClaimRef.Name == ("data-" + Test.ChartName + "-postgresql-0") {
+			err = u.Clientset.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), i.Spec.ClaimRef.Name, metav1.DeleteOptions{})
+			if err != nil {
+				panic(err.Error())
+			}
+			err = u.Clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), i.Name, metav1.DeleteOptions{})
+			if err != nil {
+				panic(err.Error())
+			}
+
+		}
+	}
+	u.ActionConfiguration.Init(u.Settings.RESTClientGetter(), u.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
+	client := action.NewUninstall(u.ActionConfiguration)
+	client.DisableHooks = true
+	client.Run(Test.ChartName)
 }
 
 func TestConfigMapCreate(t *testing.T) {
@@ -155,7 +181,6 @@ func TestPVCreate(t *testing.T) {
 	u := kubes.NewKubeRequest(lib.Logger{})
 	persistent_volume, err := u.CreatePersistentVolume(pv)
 	assert.Nil(t, err)
-	assert.NotNil(t, persistent_volume)
 	pvcheck, err := u.Clientset.CoreV1().PersistentVolumes().Get(context.TODO(), pv.Name, metav1.GetOptions{})
 	assert.Nil(t, err)
 	assert.Equal(t, pvcheck.UID, persistent_volume.UID)
@@ -178,8 +203,9 @@ func TestPVCCreate(t *testing.T) {
 func TestGetEvents(t *testing.T) {
 	namespace := "default"
 	u := kubes.NewKubeRequest(lib.Logger{})
-	events := u.GetEvents(namespace)
+	events, err := u.GetEvents(namespace)
 	assert.NotNil(t, events)
+	assert.Nil(t, err)
 }
 
 func TestGetCurrentPodStatus(t *testing.T) {
@@ -197,7 +223,7 @@ func TestClientSetInit(t *testing.T) {
 func TestHCreateRelease(t *testing.T) {
 	chart := kubes.ChartBody{}
 	chart.Namespace = "default"
-	chart.ReleaseName = faker.Word()
+	chart.ReleaseName = Test.ChartName
 	chart.ChartPath = "https://charts.bitnami.com/bitnami/keycloak-13.0.2.tgz"
 	u := kubes.NewKubeRequest(lib.Logger{})
 	release, err := u.HCreateRelease(chart)

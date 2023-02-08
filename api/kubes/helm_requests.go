@@ -10,28 +10,21 @@ func (u KubeRequest) HCreateReleaseRequest(c *gin.Context) {
 	body := ChartBody{}
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-
-		return
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	release, err := u.HCreateRelease(body)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
-		return
 	}
 
-	c.JSON(200, gin.H{
-		"message": release.Name + " is created",
-	})
+	c.JSON(200, release)
 }
 
 func (u KubeRequest) HGetReleaseRequest(c *gin.Context) {
 	results, err := u.HGetRelease()
-	if err != nil {
+	if err != nil || results == nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	c.JSON(200, results)

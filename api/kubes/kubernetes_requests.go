@@ -18,13 +18,13 @@ import (
 type KubeRequest struct {
 	logger              lib.Logger
 	Clientset           *kubernetes.Clientset
-	settings            *cli.EnvSettings
-	actionConfiguration *action.Configuration
+	Settings            *cli.EnvSettings
+	ActionConfiguration *action.Configuration
 }
 
 func NewKubeRequest(logger lib.Logger) KubeRequest {
-	settings := cli.New()
-	actionConfiguration := new(action.Configuration)
+	Settings := cli.New()
+	ActionConfiguration := new(action.Configuration)
 
 	Clientset, err := ClientsetInit()
 
@@ -35,8 +35,8 @@ func NewKubeRequest(logger lib.Logger) KubeRequest {
 	return KubeRequest{
 		logger:              logger,
 		Clientset:           Clientset,
-		settings:            settings,
-		actionConfiguration: actionConfiguration,
+		Settings:            Settings,
+		ActionConfiguration: ActionConfiguration,
 	}
 }
 
@@ -72,24 +72,18 @@ func ClientsetInit() (*kubernetes.Clientset, error) {
 // @Router /api/kube_add [post]
 func (u KubeRequest) CreatePodRequest(c *gin.Context) {
 	body := PodBody{}
-
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
+	err := c.ShouldBindJSON(&body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	pod, err := u.CreatePod(body)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
-		return
 	}
 
-	c.JSON(200, gin.H{
-		"message": pod.Name + " is created",
-	})
+	c.JSON(200, pod)
 }
 
 // @Summary Get pod info/*  */
@@ -100,27 +94,24 @@ func (u KubeRequest) CreatePodRequest(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Router /api/kube_get [post]
 func (u KubeRequest) GetPodInfoRequest(c *gin.Context) {
-
+	namespace := c.Param("namespace")
 	nodelist, err := u.Clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	for _, n := range nodelist.Items {
-		pods, err := u.Clientset.CoreV1().Pods("default").List(context.TODO(), metav1.ListOptions{})
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, err.Error())
-		}
+		pods, err := u.Clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 
 		var names []string = make([]string, len(pods.Items))
 
 		for i := 0; i < len(pods.Items); i++ {
 			names[i] = pods.Items[i].Name
 		}
-
+		if err != nil || len(pods.Items) == 0 {
+			c.JSON(http.StatusInternalServerError, err.Error())
+		}
 		c.JSON(200, gin.H{
 			"node name":  n.Name,
-			"pods count": len(pods.Items),
 			"pods names": names,
 		})
 	}
@@ -149,7 +140,6 @@ func (u KubeRequest) DeletePodRequest(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(404, "pod not found")
-		return
 	}
 
 	c.JSON(200, gin.H{
@@ -160,17 +150,12 @@ func (u KubeRequest) DeletePodRequest(c *gin.Context) {
 func (u KubeRequest) CreateOrUpdateConfigMapRequest(c *gin.Context) {
 	body := ConfigMapBody{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-
-		return
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	configmap, err := u.CreateOrUpdateConfigMap(body)
 
 	if err != nil {
-		c.JSON(400, err.Error())
-		return
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	c.JSON(200, gin.H{
@@ -181,17 +166,12 @@ func (u KubeRequest) CreateOrUpdateConfigMapRequest(c *gin.Context) {
 func (u KubeRequest) CreateOrUpdateSecretRequest(c *gin.Context) {
 	body := SecretBody{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-
-		return
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	secret, err := u.CreateOrUpdateSecret(body)
 
 	if err != nil {
-		c.JSON(400, err.Error())
-		return
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	c.JSON(200, gin.H{
@@ -200,82 +180,53 @@ func (u KubeRequest) CreateOrUpdateSecretRequest(c *gin.Context) {
 }
 
 func (u KubeRequest) CreateNamespaceRequest(c *gin.Context) {
-	body, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, err.Error())
-		return
-	}
+	body, _ := ioutil.ReadAll(c.Request.Body)
 	namespace, err := u.CreateNamespace(string(body))
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
-		return
 	}
 
-	c.JSON(200, gin.H{
-		"created": namespace.Name,
-	})
+	c.JSON(200, namespace)
 }
 
 func (u KubeRequest) CreatePersistentVolumeRequest(c *gin.Context) {
 	body := PV{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-
-		return
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	pv, err := u.CreatePersistentVolume(body)
 
-	if err != nil {
-		c.JSON(400, err.Error())
-		return
+	if err != nil || pv == nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	c.JSON(200, gin.H{
-		"created": pv.Name,
-	})
+	c.JSON(200, pv)
 }
 
 func (u KubeRequest) CreatePersistentVolumeClaimRequest(c *gin.Context) {
 	body := PVC{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-
-		return
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	pvc, err := u.CreatePersistentVolumeClaim(body)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
-		return
 	}
 
-	c.JSON(200, gin.H{
-		"created": pvc.Name,
-	})
+	c.JSON(200, pvc)
 }
 
 func (u KubeRequest) CreateNodePortRequest(c *gin.Context) {
 	body := Nodeport{}
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-
-		return
+		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 	service, err := u.CreateNodePort(body)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
-		return
 	}
 
-	c.JSON(200, gin.H{
-		"created": service.Name,
-	})
+	c.JSON(200, service)
 }

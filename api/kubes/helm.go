@@ -11,13 +11,12 @@ import (
 
 // Gets release in Helm
 func (u KubeRequest) HGetRelease() ([]*release.Release, error) {
-	if err := u.actionConfiguration.Init(u.settings.RESTClientGetter(), u.settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
+	if err := u.ActionConfiguration.Init(u.Settings.RESTClientGetter(), u.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
 		return nil, err
 	}
-	client := action.NewList(u.actionConfiguration)
-	client.Deployed = true
+	client := action.NewList(u.ActionConfiguration)
 	results, err := client.Run()
-	if err != nil {
+	if err != nil || results == nil {
 		return nil, err
 	}
 	return results, nil
@@ -26,15 +25,12 @@ func (u KubeRequest) HGetRelease() ([]*release.Release, error) {
 
 func (u KubeRequest) HCreateRelease(chartBody ChartBody) (*release.Release, error) {
 
-	if err := u.actionConfiguration.Init(u.settings.RESTClientGetter(), u.settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf); err != nil {
-		return nil, err
-	}
-
-	client := action.NewInstall(u.actionConfiguration)
+	u.ActionConfiguration.Init(u.Settings.RESTClientGetter(), u.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
+	client := action.NewInstall(u.ActionConfiguration)
 	client.Namespace = chartBody.Namespace
 	client.ReleaseName = chartBody.ReleaseName
 
-	locatedChart, err := client.LocateChart(chartBody.ChartPath, u.settings)
+	locatedChart, err := client.LocateChart(chartBody.ChartPath, u.Settings)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +40,7 @@ func (u KubeRequest) HCreateRelease(chartBody ChartBody) (*release.Release, erro
 		return nil, err
 	}
 
-	release, err := client.Run(newChart, map[string]interface{}{})
+	release, err := client.Run(newChart, nil)
 	if err != nil {
 		return nil, err
 	}

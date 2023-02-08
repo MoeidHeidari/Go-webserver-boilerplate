@@ -4,16 +4,19 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log"
 	"main/api/kubes"
 	"main/lib"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/bxcodec/faker/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/action"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,6 +28,7 @@ var ReqTest = test{
 	PodName:       faker.Word(),
 	PVName:        faker.Word(),
 	PVCName:       faker.Word(),
+	ChartName:     faker.Word(),
 }
 
 func DeleteAllReq() {
@@ -57,13 +61,34 @@ func DeleteAllReq() {
 	if err != nil {
 		panic(err.Error())
 	}
+	pvlist, err := u.Clientset.CoreV1().PersistentVolumes().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, i := range pvlist.Items {
+		if i.Spec.ClaimRef.Name == ("data-" + ReqTest.ChartName + "-postgresql-0") {
+			err = u.Clientset.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), i.Spec.ClaimRef.Name, metav1.DeleteOptions{})
+			if err != nil {
+				panic(err.Error())
+			}
+			err = u.Clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), i.Name, metav1.DeleteOptions{})
+			if err != nil {
+				panic(err.Error())
+			}
+
+		}
+	}
+	u.ActionConfiguration.Init(u.Settings.RESTClientGetter(), u.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
+	client := action.NewUninstall(u.ActionConfiguration)
+	client.DisableHooks = true
+	client.Run(ReqTest.ChartName)
 }
 func TestGetPodInfo(t *testing.T) {
 	router := gin.Default()
 	gin.SetMode(gin.TestMode)
 	k := kubes.NewKubeRequest(lib.Logger{})
-	router.GET("/", k.GetPodInfoRequest)
-	req, _ := http.NewRequest("GET", "/", nil)
+	router.GET("/:namespace", k.GetPodInfoRequest)
+	req, _ := http.NewRequest("GET", "/default", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 	assert.Equal(t, 200, resp.Code)
@@ -116,7 +141,7 @@ func TestCreatePodRequest(t *testing.T) {
 	if err != nil {
 		panic(err.Error())
 	}
-	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
+	ctx.Request = httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
@@ -164,10 +189,6 @@ func TestCreateNamespaceRequest(t *testing.T) {
 	u := kubes.NewKubeRequest(lib.Logger{})
 
 	r.POST("/", u.CreateNamespaceRequest)
-	//jsonbytes, err := json.Marshal(ReqTest.Namespace)
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
 	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(ReqTest.Namespace)))
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -234,7 +255,7 @@ func TestCreateNodePortRequest(t *testing.T) {
 func TestHCreateReleaseRequest(t *testing.T) {
 	chart := kubes.ChartBody{}
 	chart.Namespace = "default"
-	chart.ReleaseName = faker.Word()
+	chart.ReleaseName = ReqTest.ChartName
 	chart.ChartPath = "https://charts.bitnami.com/bitnami/keycloak-13.0.2.tgz"
 	u := kubes.NewKubeRequest(lib.Logger{})
 	gin.SetMode(gin.TestMode)
