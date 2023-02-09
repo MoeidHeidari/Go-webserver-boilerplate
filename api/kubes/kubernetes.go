@@ -4,6 +4,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -163,4 +164,72 @@ func (u KubeRequest) CreateNodePort(nodeport Nodeport) (*corev1.Service, error) 
 		return nil, err
 	}
 	return service, nil
+}
+
+func (u KubeRequest) CreateServiceAccount(serviceAccount ServiceAccount) (*corev1.ServiceAccount, error) {
+
+	serviceacc := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceAccount.Name,
+			Namespace: serviceAccount.Namespace,
+		},
+		Secrets: []corev1.ObjectReference{
+			{Kind: "secret",
+				Namespace: serviceAccount.SecretNamespace,
+				Name:      serviceAccount.SecretName,
+			},
+		},
+	}
+	service_account, err := u.Clientset.CoreV1().ServiceAccounts("default").Create(context.Background(), serviceacc, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return service_account, nil
+
+}
+
+func (u KubeRequest) CreateRole(rolebody Role) (*rbacv1.Role, error) {
+	role := &rbacv1.Role{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rolebody.Name,
+			Namespace: rolebody.Namespace,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{Verbs: rolebody.Verbs,
+				Resources: rolebody.Resources,
+				APIGroups: []string{
+					"",
+				},
+			},
+		},
+	}
+	r, err := u.Clientset.RbacV1().Roles(rolebody.Namespace).Create(context.Background(), role, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+func (u KubeRequest) CreateRoleBinding(rolebinding RoleBinding) (*rbacv1.RoleBinding, error) {
+	rbind := &rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      rolebinding.Name,
+			Namespace: rolebinding.Namespace,
+		},
+		Subjects: []rbacv1.Subject{
+			{Kind: "ServiceAccount",
+				Name: rolebinding.AccountName},
+		},
+		RoleRef: rbacv1.RoleRef{
+			Name: rolebinding.RoleName,
+			Kind: "Role",
+		},
+	}
+	rb, err := u.Clientset.RbacV1().RoleBindings(rolebinding.Namespace).Create(context.Background(), rbind, metav1.CreateOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+	return rb, nil
 }

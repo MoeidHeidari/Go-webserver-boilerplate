@@ -231,3 +231,40 @@ func (u KubeRequest) CreateNodePortRequest(c *gin.Context) {
 
 	c.JSON(200, service)
 }
+
+func (u KubeRequest) CreateRoleRequest(c *gin.Context) {
+	body := Role{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	role, err := u.CreateRole(body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	c.JSON(200, role)
+}
+
+func (u KubeRequest) CreateRoleBindingRequest(c *gin.Context) {
+	body := RoleBinding{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	rolebinding, err := u.CreateRoleBinding(body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	c.JSON(200, rolebinding)
+}
+
+func (u KubeRequest) CreateServiceAccountRequest(c *gin.Context) {
+	body := ServiceAccount{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	rolebinding, err := u.CreateServiceAccount(body)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	c.JSON(200, rolebinding)
+}

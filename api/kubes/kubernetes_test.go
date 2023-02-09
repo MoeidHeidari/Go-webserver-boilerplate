@@ -16,25 +16,31 @@ import (
 )
 
 type test struct {
-	ConfigmapName string
-	SecretName    string
-	Namespace     string
-	NodeportName  string
-	PodName       string
-	PVName        string
-	PVCName       string
-	ChartName     string
+	ConfigmapName      string
+	SecretName         string
+	Namespace          string
+	NodeportName       string
+	PodName            string
+	PVName             string
+	PVCName            string
+	ChartName          string
+	RoleName           string
+	RoleBindingName    string
+	ServiceAccountName string
 }
 
 var Test = test{
-	ConfigmapName: faker.Word(),
-	SecretName:    faker.Word(),
-	Namespace:     faker.Word(),
-	NodeportName:  faker.Word(),
-	PodName:       faker.Word(),
-	PVName:        faker.Word(),
-	PVCName:       faker.Word(),
-	ChartName:     faker.Word(),
+	ConfigmapName:      faker.Word(),
+	SecretName:         faker.Word(),
+	Namespace:          faker.Word(),
+	NodeportName:       faker.Word(),
+	PodName:            faker.Word(),
+	PVName:             faker.Word(),
+	PVCName:            faker.Word(),
+	ChartName:          faker.Word(),
+	RoleName:           faker.Word(),
+	RoleBindingName:    faker.Word(),
+	ServiceAccountName: faker.Word(),
 }
 
 func DeleteAll() {
@@ -67,10 +73,23 @@ func DeleteAll() {
 	if err != nil {
 		panic(err.Error())
 	}
+	err = u.Clientset.RbacV1().Roles("default").Delete(context.Background(), Test.RoleName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.RbacV1().RoleBindings("default").Delete(context.Background(), Test.RoleBindingName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.CoreV1().ServiceAccounts("default").Delete(context.Background(), Test.ServiceAccountName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
 	pvlist, err := u.Clientset.CoreV1().PersistentVolumes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
+
 	for _, i := range pvlist.Items {
 		if i.Spec.ClaimRef.Name == ("data-" + Test.ChartName + "-postgresql-0") {
 			err = u.Clientset.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), i.Spec.ClaimRef.Name, metav1.DeleteOptions{})
@@ -251,6 +270,49 @@ func TestHRepoAdd(t *testing.T) {
 	assert.Nil(t, err)
 	err = u.HelmRepoAdd(repobody)
 	assert.NotNil(t, err)
+}
+
+func TestCreateServiceAccount(t *testing.T) {
+	servacc := kubes.ServiceAccount{
+		Name:            Test.ServiceAccountName,
+		Namespace:       "default",
+		SecretNamespace: "default",
+		SecretName:      Test.SecretName,
+	}
+	u := kubes.NewKubeRequest(lib.Logger{})
+	service_account, err := u.CreateServiceAccount(servacc)
+	assert.Nil(t, err)
+	assert.NotNil(t, service_account)
+}
+
+func TestCreateRole(t *testing.T) {
+	rolebody := kubes.Role{
+		Name:      Test.RoleName,
+		Namespace: "default",
+		Verbs: []string{
+			"get", "list", "watch",
+		},
+		Resources: []string{
+			"pods",
+		},
+	}
+	u := kubes.NewKubeRequest(lib.Logger{})
+	role, err := u.CreateRole(rolebody)
+	assert.Nil(t, err)
+	assert.NotNil(t, role)
+}
+
+func TestCreateRoleBinding(t *testing.T) {
+	rolebindingbody := kubes.RoleBinding{
+		Name:        Test.RoleBindingName,
+		Namespace:   "default",
+		AccountName: Test.ServiceAccountName,
+		RoleName:    Test.RoleName,
+	}
+	u := kubes.NewKubeRequest(lib.Logger{})
+	rolebinding, err := u.CreateRoleBinding(rolebindingbody)
+	assert.Nil(t, err)
+	assert.NotNil(t, rolebinding)
 }
 
 func TestMain(m *testing.M) {

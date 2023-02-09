@@ -21,14 +21,17 @@ import (
 )
 
 var ReqTest = test{
-	ConfigmapName: faker.Word(),
-	SecretName:    faker.Word(),
-	Namespace:     faker.Word(),
-	NodeportName:  faker.Word(),
-	PodName:       faker.Word(),
-	PVName:        faker.Word(),
-	PVCName:       faker.Word(),
-	ChartName:     faker.Word(),
+	ConfigmapName:      faker.Word(),
+	SecretName:         faker.Word(),
+	Namespace:          faker.Word(),
+	NodeportName:       faker.Word(),
+	PodName:            faker.Word(),
+	PVName:             faker.Word(),
+	PVCName:            faker.Word(),
+	ChartName:          faker.Word(),
+	RoleName:           faker.Word(),
+	RoleBindingName:    faker.Word(),
+	ServiceAccountName: faker.Word(),
 }
 
 func DeleteAllReq() {
@@ -58,6 +61,18 @@ func DeleteAllReq() {
 		panic(err.Error())
 	}
 	err = u.Clientset.CoreV1().ConfigMaps("default").Delete(context.Background(), ReqTest.ConfigmapName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.RbacV1().Roles("default").Delete(context.Background(), ReqTest.RoleName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.RbacV1().RoleBindings("default").Delete(context.Background(), ReqTest.RoleBindingName, metav1.DeleteOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = u.Clientset.CoreV1().ServiceAccounts("default").Delete(context.Background(), ReqTest.ServiceAccountName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -292,6 +307,73 @@ func TestHCreateRepoRequest(t *testing.T) {
 	ctx, r := gin.CreateTestContext(w)
 	r.POST("/", u.HCreateRepoRequest)
 	jsonbytes, err := json.Marshal(repobody)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestCreateServiceAccountRequest(t *testing.T) {
+	servacc := kubes.ServiceAccount{
+		Name:            ReqTest.ServiceAccountName,
+		Namespace:       "default",
+		SecretNamespace: "default",
+		SecretName:      ReqTest.SecretName,
+	}
+	u := kubes.NewKubeRequest(lib.Logger{})
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	ctx, r := gin.CreateTestContext(w)
+	r.POST("/", u.CreateServiceAccountRequest)
+	jsonbytes, err := json.Marshal(servacc)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestCreateRoleRequest(t *testing.T) {
+	u := kubes.NewKubeRequest(lib.Logger{})
+	rolebody := kubes.Role{
+		Name:      ReqTest.RoleName,
+		Namespace: "default",
+		Verbs: []string{
+			"get", "list", "watch",
+		},
+		Resources: []string{
+			"pods",
+		},
+	}
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	ctx, r := gin.CreateTestContext(w)
+	r.POST("/", u.CreateRoleRequest)
+	jsonbytes, err := json.Marshal(rolebody)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestCreateRoleBindingRequest(t *testing.T) {
+	u := kubes.NewKubeRequest(lib.Logger{})
+	rolebindingbody := kubes.RoleBinding{
+		Name:        ReqTest.RoleBindingName,
+		Namespace:   "default",
+		AccountName: ReqTest.ServiceAccountName,
+		RoleName:    ReqTest.RoleName,
+	}
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	ctx, r := gin.CreateTestContext(w)
+	r.POST("/", u.CreateRoleBindingRequest)
+	jsonbytes, err := json.Marshal(rolebindingbody)
 	if err != nil {
 		panic(err.Error())
 	}

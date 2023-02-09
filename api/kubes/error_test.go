@@ -349,3 +349,81 @@ func TestHelmCreateRepoRequestError(t *testing.T) {
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
+
+func TestCreateServiceAccountRequestError(t *testing.T) {
+	servacc := kubes.ServiceAccount{
+		Name:            ReqTest.ServiceAccountName,
+		Namespace:       faker.Word(),
+		SecretNamespace: "default",
+		SecretName:      ReqTest.SecretName,
+	}
+	u := kubes.NewKubeRequest(lib.Logger{})
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	ctx, r := gin.CreateTestContext(w)
+	r.POST("/", u.CreateServiceAccountRequest)
+	jsonbytes, err := json.Marshal(servacc)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestCreateRoleRequestError(t *testing.T) {
+	u := kubes.NewKubeRequest(lib.Logger{})
+	rolebody := kubes.Role{
+		Name:      ReqTest.RoleName,
+		Namespace: faker.Word(),
+		Verbs: []string{
+			"get", "list", "watch",
+		},
+		Resources: []string{
+			"pods",
+		},
+	}
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	ctx, r := gin.CreateTestContext(w)
+	r.POST("/", u.CreateRoleRequest)
+	jsonbytes, err := json.Marshal(rolebody)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestCreateRoleBindingRequestError(t *testing.T) {
+	u := kubes.NewKubeRequest(lib.Logger{})
+	rolebindingbody := kubes.RoleBinding{
+		Name:        ReqTest.RoleBindingName,
+		Namespace:   faker.Word(),
+		AccountName: ReqTest.ServiceAccountName,
+		RoleName:    ReqTest.RoleName,
+	}
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	ctx, r := gin.CreateTestContext(w)
+	r.POST("/", u.CreateRoleBindingRequest)
+	jsonbytes, err := json.Marshal(rolebindingbody)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}

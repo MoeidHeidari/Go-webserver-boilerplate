@@ -56,3 +56,24 @@ type Nodeport struct {
 	Port         int32  `json:"port"`
 	RedirectPort int32  `json:"redirect_port"`
 }
+
+type Role struct {
+	Name      string   `json:"name"`
+	Namespace string   `json:"namespace"`
+	Verbs     []string `json:"verbs"`
+	Resources []string `json:"resourses"`
+}
+
+type RoleBinding struct {
+	Name        string `json:"name"`
+	Namespace   string `json:"namespace"`
+	AccountName string `json:"account-name"`
+	RoleName    string `json:"role-name"`
+}
+
+type ServiceAccount struct {
+	Name            string `json:"name"`
+	Namespace       string `json:"namespace"`
+	SecretNamespace string `json:"secret-namespace"`
+	SecretName      string `json:"secret-name"`
+}
