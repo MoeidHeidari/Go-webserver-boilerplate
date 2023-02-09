@@ -2,6 +2,7 @@ package lib
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,7 +25,7 @@ func NewDatabase(env Env, logger Logger) Database {
 
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
-		ApplyURI("mongodb+srv://user:admin@pozhiloy.qaqey6i.mongodb.net/test?authMechanism=SCRAM-SHA-1").
+		ApplyURI(os.Getenv("MONGO_URL")).
 		SetServerAPIOptions(serverAPIOptions)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

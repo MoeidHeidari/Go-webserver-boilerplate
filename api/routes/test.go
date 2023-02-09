@@ -40,6 +40,10 @@ func (s TestRoutes) Setup() {
 		api.POST("/kube/create_pvc", s.kubes.CreatePersistentVolumeClaimRequest)
 		api.POST("/kube/create_nodeport", s.kubes.CreateNodePortRequest)
 		api.POST("/helm_create", s.kubes.HCreateReleaseRequest)
+		api.POST("helm_create_repo", s.kubes.HCreateRepoRequest)
+		api.POST("/kube/create_role", s.kubes.CreateRoleRequest)
+		api.POST("/kube/role_bind", s.kubes.CreateRoleBindingRequest)
+		api.POST("/kube/create_account", s.kubes.CreateServiceAccountRequest)
 		api.DELETE("/test/:id", s.TestController.DeleteTest)
 		api.DELETE("/kube_delete/:namespace/:pod_name", s.kubes.DeletePodRequest)
 	}
