@@ -242,6 +242,17 @@ func TestHGetRelease(t *testing.T) {
 	assert.NotNil(t, results)
 }
 
+func TestHRepoAdd(t *testing.T) {
+	u := kubes.NewKubeRequest(lib.Logger{})
+	repobody := kubes.RepositoryBody{}
+	repobody.Name = faker.Word()
+	repobody.Url = "https://charts.helm.sh/stable"
+	err := u.HelmRepoAdd(repobody)
+	assert.Nil(t, err)
+	err = u.HelmRepoAdd(repobody)
+	assert.NotNil(t, err)
+}
+
 func TestMain(m *testing.M) {
 	m.Run()
 	DeleteAll()

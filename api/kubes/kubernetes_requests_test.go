@@ -276,8 +276,26 @@ func TestHGetReleaseRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	k := kubes.NewKubeRequest(lib.Logger{})
 	router.GET("/", k.HGetReleaseRequest)
-	req, _ := http.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest("GET", "/", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
 	assert.Equal(t, 200, resp.Code)
+}
+
+func TestHCreateRepoRequest(t *testing.T) {
+	u := kubes.NewKubeRequest(lib.Logger{})
+	repobody := kubes.RepositoryBody{}
+	repobody.Name = faker.Word()
+	repobody.Url = "https://charts.helm.sh/stable"
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	ctx, r := gin.CreateTestContext(w)
+	r.POST("/", u.HCreateRepoRequest)
+	jsonbytes, err := json.Marshal(repobody)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusOK, w.Code)
 }

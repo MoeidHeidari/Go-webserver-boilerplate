@@ -327,3 +327,25 @@ func TestCreatePVCRequestError(t *testing.T) {
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
+
+func TestHelmCreateRepoRequestError(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	ctx, r := gin.CreateTestContext(w)
+	u := kubes.NewKubeRequest(lib.Logger{})
+	r.POST("/", u.HCreateRepoRequest)
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	repobody := kubes.RepositoryBody{}
+	repobody.Name = faker.Word()
+	repobody.Url = faker.URL()
+	jsonbytes, err := json.Marshal(repobody)
+	if err != nil {
+		panic(err.Error())
+	}
+	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
+	r.ServeHTTP(w, ctx.Request)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}

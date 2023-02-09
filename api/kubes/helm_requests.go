@@ -29,3 +29,16 @@ func (u KubeRequest) HGetReleaseRequest(c *gin.Context) {
 	}
 	c.JSON(200, results)
 }
+
+func (u KubeRequest) HCreateRepoRequest(c *gin.Context) {
+	body := RepositoryBody{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	err := u.HelmRepoAdd(body)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+	}
+	c.JSON(200, "repo created")
+}
