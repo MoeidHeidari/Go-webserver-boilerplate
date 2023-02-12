@@ -1,16 +1,18 @@
 package controllers
 
 import (
-	"main/constants"
+	"io/ioutil"
 	"main/lib"
 	"main/models"
 	"main/services"
 	"net/http"
-	"strconv"
+	"net/url"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // TestController data type
@@ -30,21 +32,19 @@ func NewTestController(TestService services.TestService, logger lib.Logger) Test
 // @Summary Gets one test
 // @Tags get tests
 // @Description Get one test by id
-// @Param id path int true "Test id"
+// @Param id path string true "Test id"
+// @Produce json
 // @Security ApiKeyAuth
 // @Router /api/test/{id} [get]
 func (u TestController) GetOneTest(c *gin.Context) {
 	paramID := c.Param("id")
 
-	id, err := strconv.Atoi(paramID)
+	objID, err := primitive.ObjectIDFromHex(paramID)
 	if err != nil {
-		u.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
 		return
 	}
-	Test, err := u.service.GetOneTest(uint(id))
+
+	Test, err := u.service.GetOneTest(objID)
 
 	if err != nil {
 		u.logger.Error(err)
@@ -54,15 +54,14 @@ func (u TestController) GetOneTest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"data": Test,
-	})
+	c.JSON(200, Test)
 
 }
 
 // @Summary Get all test
 // @Tags get tests
 // @Description Get all the Tests
+// @Accept */*
 // @Security ApiKeyAuth
 // @Router /api/test [get]
 func (u TestController) GetTest(c *gin.Context) {
@@ -70,7 +69,24 @@ func (u TestController) GetTest(c *gin.Context) {
 	if err != nil {
 		u.logger.Error(err)
 	}
-	c.JSON(200, gin.H{"data": Tests})
+	c.JSON(200, Tests)
+}
+
+// @Summary Get all test fields
+// @Tags get all test fields
+// @Description Get all test fields
+// @Param field_name path string true "Field"
+// @Produce json
+// @Security ApiKeyAuth
+// @Router /api/test [get]
+func (u TestController) GetTestField(c *gin.Context) {
+	field_name := c.Param("field_name")
+	Tests, err := u.service.GetAllTestField(field_name)
+	if err != nil {
+		u.logger.Error(err)
+	}
+
+	c.JSON(200, Tests)
 }
 
 // @Summary Create GetTests
@@ -83,7 +99,7 @@ func (u TestController) GetTest(c *gin.Context) {
 // @Router /api/test [post]
 func (u TestController) CreateTest(c *gin.Context) {
 	Test := models.Test{}
-	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
+	//trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
 
 	if err := c.ShouldBindJSON(&Test); err != nil {
 		u.logger.Error(err)
@@ -95,8 +111,9 @@ func (u TestController) CreateTest(c *gin.Context) {
 
 	Test.CreatedAt = time.Now()
 	Test.UpdatedAt = time.Now()
+	Test.ID = primitive.NewObjectID()
 
-	if err := u.service.WithTrx(trxHandle).CreateTest(Test); err != nil {
+	if err := u.service.CreateTest(Test); err != nil {
 		u.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -104,7 +121,7 @@ func (u TestController) CreateTest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"data": "Test created"})
+	c.JSON(200, "Test created")
 }
 
 // @Summary Update test
@@ -120,18 +137,12 @@ func (u TestController) UpdateTest(c *gin.Context) {
 
 	paramID := c.Param("id")
 
-	id, err := strconv.Atoi(paramID)
-
+	objID, err := primitive.ObjectIDFromHex(paramID)
 	if err != nil {
-		u.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
 		return
 	}
 
-	Test, _ := u.service.GetOneTest(uint(id))
-	trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
+	Test, _ := u.service.GetOneTest(objID)
 
 	if err := c.ShouldBindJSON(&Test); err != nil {
 		u.logger.Error(err)
@@ -143,7 +154,7 @@ func (u TestController) UpdateTest(c *gin.Context) {
 
 	Test.UpdatedAt = time.Now()
 
-	if err := u.service.WithTrx(trxHandle).UpdateTest(Test); err != nil {
+	if err := u.service.UpdateTest(Test); err != nil {
 		u.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -151,11 +162,11 @@ func (u TestController) UpdateTest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"data": "Test updated"})
+	c.JSON(200, "Test updated")
 }
 
 // @Summary delete test
-// @Tags Tests Control
+// @Tags Delete
 // @Description delete test
 // @ID delete-test
 // @Param id path int true "Test id"
@@ -165,16 +176,7 @@ func (u TestController) UpdateTest(c *gin.Context) {
 func (u TestController) DeleteTest(c *gin.Context) {
 	paramID := c.Param("id")
 
-	id, err := strconv.Atoi(paramID)
-	if err != nil {
-		u.logger.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-		return
-	}
-
-	if err := u.service.DeleteTest(uint(id)); err != nil {
+	if err := u.service.DeleteTest(paramID); err != nil {
 		u.logger.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -182,5 +184,31 @@ func (u TestController) DeleteTest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"data": "Test deleted"})
+	c.JSON(200, "Test deleted")
+}
+
+func (u TestController) GetCode(c *gin.Context) {
+	paramcode := c.Query("code")
+	Url := "http://localhost:8080/realms/master/protocol/openid-connect/token"
+	url_form := url.Values{
+		"grant_type":    {"authorization_code"},
+		"code":          {paramcode},
+		"client_id":     {"skyfarm"},
+		"redirect_uri":  {"http://localhost:3000/get_code"},
+		"client_secret": {os.Getenv("JWT_SECRET")},
+	}
+	resp, err := http.PostForm(Url, url_form)
+	if err != nil {
+		u.logger.Error(err)
+		c.String(500, err.Error())
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		u.logger.Error(err)
+		c.String(500, err.Error())
+	}
+	resp.Body.Close()
+	c.JSON(200, strings.Split(strings.Split(string(body), ",")[0], ":")[1])
+	u.logger.Info(resp)
 }

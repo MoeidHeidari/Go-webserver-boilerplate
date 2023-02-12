@@ -16,6 +16,133 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/currency": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get one test by id",
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Gets currencies",
+                "responses": {}
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Post request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "get tests"
+                ],
+                "summary": "Gets post responce",
+                "parameters": [
+                    {
+                        "description": "Post form",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/kube_add": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Post request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kubernetes"
+                ],
+                "summary": "Create a pod",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "pod_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "container_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "image_type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Field",
+                        "name": "command",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/api/kube_get": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Post request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "kubernetes"
+                ],
+                "summary": "Get pod info",
+                "responses": {}
+            }
+        },
         "/api/test": {
             "get": {
                 "security": [
@@ -23,11 +150,23 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get all the Tests",
-                "tags": [
-                    "get tests"
+                "description": "Get all test fields",
+                "produces": [
+                    "application/json"
                 ],
-                "summary": "Get all test",
+                "tags": [
+                    "get all test fields"
+                ],
+                "summary": "Get all test fields",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Field",
+                        "name": "field_name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {}
             },
             "post": {
@@ -69,13 +208,16 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Get one test by id",
+                "produces": [
+                    "application/json"
+                ],
                 "tags": [
                     "get tests"
                 ],
                 "summary": "Gets one test",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Test id",
                         "name": "id",
                         "in": "path",
@@ -132,7 +274,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Tests Control"
+                    "Delete"
                 ],
                 "summary": "delete test",
                 "operationId": "delete-test",

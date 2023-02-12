@@ -1,13 +1,16 @@
 package bootstrap
 
 import (
-	"go.uber.org/fx"
 	"main/api/controllers"
+	"main/api/kubes"
 	"main/api/middlewares"
 	"main/api/routes"
+	"main/api/ws"
 	"main/lib"
 	"main/repository"
 	"main/services"
+
+	"go.uber.org/fx"
 )
 
 var CommonModules = fx.Options(
@@ -17,4 +20,6 @@ var CommonModules = fx.Options(
 	services.Module,
 	middlewares.Module,
 	repository.Module,
+	kubes.Module,
+	ws.Module,
 )

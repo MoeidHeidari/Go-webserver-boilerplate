@@ -4,15 +4,105 @@ info:
   description: The BEST API you have ever seen
   title: SkyFarm
 paths:
-  /api/test:
+  /api/currency:
     get:
-      description: Get all the Tests
+      description: Get one test by id
       responses: {}
       security:
       - ApiKeyAuth: []
-      summary: Get all test
+      summary: Gets currencies
       tags:
       - get tests
+    post:
+      consumes:
+      - application/json
+      description: Post request
+      parameters:
+      - description: Post form
+        in: body
+        name: input
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Gets post responce
+      tags:
+      - get tests
+  /api/kube_add:
+    post:
+      consumes:
+      - application/json
+      description: Post request
+      parameters:
+      - description: Field
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: Field
+        in: path
+        name: pod_name
+        required: true
+        type: string
+      - description: Field
+        in: path
+        name: container_name
+        required: true
+        type: string
+      - description: Field
+        in: path
+        name: image_type
+        required: true
+        type: string
+      - description: Field
+        in: query
+        items:
+          type: string
+        name: command
+        required: true
+        type: array
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Create a pod
+      tags:
+      - kubernetes
+  /api/kube_get:
+    post:
+      consumes:
+      - application/json
+      description: Post request
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Get pod info
+      tags:
+      - kubernetes
+  /api/test:
+    get:
+      description: Get all test fields
+      parameters:
+      - description: Field
+        in: path
+        name: field_name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Get all test fields
+      tags:
+      - get all test fields
     post:
       consumes:
       - application/json
@@ -49,7 +139,7 @@ paths:
       - ApiKeyAuth: []
       summary: delete test
       tags:
-      - Tests Control
+      - Delete
     get:
       description: Get one test by id
       parameters:
@@ -57,7 +147,9 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
+      produces:
+      - application/json
       responses: {}
       security:
       - ApiKeyAuth: []

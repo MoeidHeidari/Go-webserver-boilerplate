@@ -20,6 +20,7 @@ import (
 
 func main() {
 	go runSwagger()
+	//go run_kubernetes()
 	_ = godotenv.Load()
 	err := bootstrap.RootApp.Execute()
 	if err != nil {

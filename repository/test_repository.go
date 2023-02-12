@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"gorm.io/gorm"
 	"main/lib"
+
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // TestRepository database structure
@@ -20,11 +21,11 @@ func NewTestRepository(db lib.Database, logger lib.Logger) TestRepository {
 }
 
 // WithTrx enables repository with transaction
-func (r TestRepository) WithTrx(trxHandle *gorm.DB) TestRepository {
+func (r TestRepository) WithTrx(trxHandle *mongo.Collection) TestRepository {
 	if trxHandle == nil {
 		r.logger.Error("Transaction Database not found in gin context. ")
 		return r
 	}
-	r.Database.DB = trxHandle
+	//r.Database.collection = trxHandle
 	return r
 }
