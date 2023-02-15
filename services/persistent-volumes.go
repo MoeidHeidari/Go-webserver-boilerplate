@@ -1,14 +1,15 @@
-package kubes
+package services
 
 import (
 	"context"
+	"main/models"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (u KubeRequest) CreatePersistentVolume(persistentVolume PV) (*corev1.PersistentVolume, error) {
+func (u KubernetesService) CreatePersistentVolume(persistentVolume models.PV) (*corev1.PersistentVolume, error) {
 	pv := &corev1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   persistentVolume.Name,
@@ -28,7 +29,7 @@ func (u KubeRequest) CreatePersistentVolume(persistentVolume PV) (*corev1.Persis
 			}},
 		},
 	}
-	Pv, err := u.Clientset.CoreV1().PersistentVolumes().Create(context.Background(), pv, metav1.CreateOptions{})
+	Pv, err := u.Repository.Clientset.CoreV1().PersistentVolumes().Create(context.Background(), pv, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func (u KubeRequest) CreatePersistentVolume(persistentVolume PV) (*corev1.Persis
 
 }
 
-func (u KubeRequest) CreatePersistentVolumeClaim(persistentVolumeClaim PVC) (*corev1.PersistentVolumeClaim, error) {
+func (u KubernetesService) CreatePersistentVolumeClaim(persistentVolumeClaim models.PVC) (*corev1.PersistentVolumeClaim, error) {
 	storageclass := ""
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
@@ -55,7 +56,7 @@ func (u KubeRequest) CreatePersistentVolumeClaim(persistentVolumeClaim PVC) (*co
 			},
 		},
 	}
-	pvc, err := u.Clientset.CoreV1().PersistentVolumeClaims(persistentVolumeClaim.Namespace).Create(context.Background(), pvc, metav1.CreateOptions{})
+	pvc, err := u.Repository.Clientset.CoreV1().PersistentVolumeClaims(persistentVolumeClaim.Namespace).Create(context.Background(), pvc, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}

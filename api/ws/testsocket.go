@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"main/lib"
+	"main/repository"
+	"main/services"
 	"net/http"
 	"time"
-
-	"main/api/kubes"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -44,7 +44,7 @@ func (w Ws) MessageHandler(c *gin.Context) {
 	if err != nil {
 		w.logger.Fatal(err.Error())
 	}
-	k := kubes.NewKubeRequest(w.logger)
+	k := services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{}))
 	go func() {
 		events, err := k.GetEvents("default")
 		if err != nil {

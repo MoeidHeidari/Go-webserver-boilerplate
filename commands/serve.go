@@ -21,6 +21,7 @@ func (s *ServeCommand) Setup(cmd *cobra.Command) {}
 
 func (s *ServeCommand) Run() lib.CommandRunner {
 	return func(
+		kubeclient lib.KubernetesClient,
 		middleware middlewares.Middlewares,
 		env lib.Env,
 		router lib.RequestHandler,
@@ -30,12 +31,11 @@ func (s *ServeCommand) Run() lib.CommandRunner {
 	) {
 		middleware.Setup()
 		route.Setup()
-
 		logger.Info("Running server")
 		if env.ServerPort == "" {
 			_ = router.Gin.Run()
 		} else {
-			_ = router.Gin.Run(":" + env.ServerPort)
+			_ = router.Gin.Run(env.ServerHost + ":" + env.ServerPort)
 		}
 	}
 }

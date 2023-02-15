@@ -1,4 +1,4 @@
-package kubes
+package models
 
 type ChartBody struct {
 	ChartPath   string `json:"chart_path"`

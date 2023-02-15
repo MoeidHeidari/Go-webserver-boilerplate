@@ -1,9 +1,10 @@
-package kubes
+package services
 
 import (
 	"context"
 	"io/ioutil"
 	"log"
+	"main/models"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,9 +21,9 @@ import (
 )
 
 // Gets release in Helm
-func (u KubeRequest) HGetRelease() ([]*release.Release, error) {
-	u.ActionConfiguration.Init(u.Settings.RESTClientGetter(), u.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
-	client := action.NewList(u.ActionConfiguration)
+func (u KubernetesService) HGetRelease() ([]*release.Release, error) {
+	u.Repository.ActionConfiguration.Init(u.Repository.Settings.RESTClientGetter(), u.Repository.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
+	client := action.NewList(u.Repository.ActionConfiguration)
 	results, err := client.Run()
 	if err != nil || results == nil {
 		return nil, err
@@ -30,14 +31,14 @@ func (u KubeRequest) HGetRelease() ([]*release.Release, error) {
 	return results, nil
 }
 
-func (u KubeRequest) HCreateRelease(chartBody ChartBody) (*release.Release, error) {
+func (u KubernetesService) HCreateRelease(chartBody models.ChartBody) (*release.Release, error) {
 
-	u.ActionConfiguration.Init(u.Settings.RESTClientGetter(), u.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
-	client := action.NewInstall(u.ActionConfiguration)
+	u.Repository.ActionConfiguration.Init(u.Repository.Settings.RESTClientGetter(), u.Repository.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
+	client := action.NewInstall(u.Repository.ActionConfiguration)
 	client.Namespace = chartBody.Namespace
 	client.ReleaseName = chartBody.ReleaseName
 
-	locatedChart, err := client.LocateChart(chartBody.ChartPath, u.Settings)
+	locatedChart, err := client.LocateChart(chartBody.ChartPath, u.Repository.Settings)
 	if err != nil {
 		return nil, err
 	}
@@ -55,10 +56,10 @@ func (u KubeRequest) HCreateRelease(chartBody ChartBody) (*release.Release, erro
 	return release, nil
 }
 
-func (u KubeRequest) HelmRepoAdd(body RepositoryBody) error {
+func (u KubernetesService) HelmRepoAdd(body models.RepositoryBody) error {
 	name := body.Name
 	url := body.Url
-	repoFile := u.Settings.RepositoryConfig
+	repoFile := u.Repository.Settings.RepositoryConfig
 	err := os.MkdirAll(filepath.Dir(repoFile), os.ModePerm)
 	if err != nil && !os.IsExist(err) {
 		return err
@@ -94,13 +95,13 @@ func (u KubeRequest) HelmRepoAdd(body RepositoryBody) error {
 		URL:  url,
 	}
 
-	r, err := repo.NewChartRepository(&c, getter.All(u.Settings))
+	r, err := repo.NewChartRepository(&c, getter.All(u.Repository.Settings))
 	if err != nil {
 		return err
 	}
 
 	if _, err := r.DownloadIndexFile(); err != nil {
-		err := errors.Wrapf(err, "looks like %q is not a valid chart repository or cannot be reached", url)
+		err := errors.Wrapf(err, "looks like %q is not a valid chart Repository or cannot be reached", url)
 		return err
 	}
 

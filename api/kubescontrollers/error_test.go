@@ -1,11 +1,14 @@
-package kubes_test
+package kubescontrollers_test
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"main/api/kubes"
+	"main/api/kubescontrollers"
 	"main/lib"
+	"main/models"
+	"main/repository"
+	"main/services"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,120 +21,120 @@ import (
 )
 
 func TestConfigMapUpdate(t *testing.T) {
-	configmapbody := kubes.ConfigMapBody{}
+	configmapbody := models.ConfigMapBody{}
 	err := faker.FakeData(&configmapbody.Data)
 	if err != nil {
 		panic(err.Error())
 	}
 	configmapbody.Name = faker.Word()
 	configmapbody.Namespace = "default"
-	u := kubes.NewKubeRequest(lib.Logger{})
-	cm, err := u.CreateOrUpdateConfigMap(configmapbody)
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	cm, err := u.Service.CreateOrUpdateConfigMap(configmapbody)
 	assert.Nil(t, err)
 	assert.NotNil(t, cm)
 	err = faker.FakeData(&configmapbody.Data)
 	if err != nil {
 		panic(err.Error())
 	}
-	cm, err = u.CreateOrUpdateConfigMap(configmapbody)
+	cm, err = u.Service.CreateOrUpdateConfigMap(configmapbody)
 	if err != nil {
 		panic(err.Error())
 	}
 	assert.Nil(t, err)
-	get_cm, err := u.Clientset.CoreV1().ConfigMaps("default").Get(context.Background(), configmapbody.Name, metav1.GetOptions{})
+	get_cm, err := u.Service.Repository.Clientset.CoreV1().ConfigMaps("default").Get(context.Background(), configmapbody.Name, metav1.GetOptions{})
 	assert.Nil(t, err)
 	assert.Equal(t, get_cm.Labels, cm.Labels)
-	err = u.Clientset.CoreV1().ConfigMaps("default").Delete(context.Background(), configmapbody.Name, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.CoreV1().ConfigMaps("default").Delete(context.Background(), configmapbody.Name, metav1.DeleteOptions{})
 	assert.Nil(t, err)
 
 }
 
 func TestSecretUpdate(t *testing.T) {
-	secret := kubes.SecretBody{}
+	secret := models.SecretBody{}
 	err := faker.FakeData(&secret.Data)
 	if err != nil {
 		panic(err.Error())
 	}
 	secret.Name = faker.Word()
 	secret.Namespace = "default"
-	u := kubes.NewKubeRequest(lib.Logger{})
-	cm, err := u.CreateOrUpdateSecret(secret)
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	cm, err := u.Service.CreateOrUpdateSecret(secret)
 	assert.Nil(t, err)
 	assert.NotNil(t, cm)
 	err = faker.FakeData(&secret.Data)
 	if err != nil {
 		panic(err.Error())
 	}
-	cm, err = u.CreateOrUpdateSecret(secret)
+	cm, err = u.Service.CreateOrUpdateSecret(secret)
 	if err != nil {
 		panic(err.Error())
 	}
 	assert.Nil(t, err)
-	get_cm, err := u.Clientset.CoreV1().Secrets("default").Get(context.Background(), secret.Name, metav1.GetOptions{})
+	get_cm, err := u.Service.Repository.Clientset.CoreV1().Secrets("default").Get(context.Background(), secret.Name, metav1.GetOptions{})
 	assert.Nil(t, err)
 	assert.Equal(t, get_cm.Labels, cm.Labels)
-	err = u.Clientset.CoreV1().Secrets("default").Delete(context.Background(), secret.Name, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.CoreV1().Secrets("default").Delete(context.Background(), secret.Name, metav1.DeleteOptions{})
 	assert.Nil(t, err)
 }
 
 func TestCreateNodePortError(t *testing.T) {
-	nodeportbody := kubes.Nodeport{}
+	nodeportbody := models.Nodeport{}
 	nodeportbody.Name = faker.Word()
 	nodeportbody.Namespace = "random"
 	nodeportbody.RedirectPort = 10
 	nodeportbody.Port = 20
-	u := kubes.NewKubeRequest(lib.Logger{})
-	service, err := u.CreateNodePort(nodeportbody)
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	service, err := u.Service.CreateNodePort(nodeportbody)
 	assert.NotNil(t, err)
 	assert.Nil(t, service)
 }
 
 func TestPodCreateError(t *testing.T) {
-	podBody := kubes.PodBody{}
+	podBody := models.PodBody{}
 	podBody.Name = faker.FirstName()
 	podBody.Namespace = faker.Word()
-	u := kubes.NewKubeRequest(lib.Logger{})
-	pod, err := u.CreatePod(podBody)
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	pod, err := u.Service.CreatePod(podBody)
 	assert.Nil(t, pod)
 	assert.NotNil(t, err)
 
 }
 
 func TestCreatePVError(t *testing.T) {
-	pvbody := kubes.PV{}
+	pvbody := models.PV{}
 	pvbody.Name = faker.Name()
 	pvbody.Path = faker.Word()
 	pvbody.Storage = "1Gi"
-	u := kubes.NewKubeRequest(lib.Logger{})
-	pv, err := u.CreatePersistentVolume(pvbody)
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	pv, err := u.Service.CreatePersistentVolume(pvbody)
 	assert.Nil(t, pv)
 	assert.NotNil(t, err)
 }
 
 func TestCreatePVCError(t *testing.T) {
-	pvcbody := kubes.PVC{}
+	pvcbody := models.PVC{}
 	pvcbody.Name = faker.Word()
 	pvcbody.Namespace = faker.Word()
 	pvcbody.Storage = "1Gi"
-	u := kubes.NewKubeRequest(lib.Logger{})
-	pvc, err := u.CreatePersistentVolumeClaim(pvcbody)
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	pvc, err := u.Service.CreatePersistentVolumeClaim(pvcbody)
 	assert.Nil(t, pvc)
 	assert.NotNil(t, err)
 }
 
 func TestHgetReleaseError(t *testing.T) {
-	u := kubes.NewKubeRequest(lib.Logger{})
-	u.Settings.SetNamespace("random")
-	results, _ := u.HGetRelease()
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	u.Service.Repository.Settings.SetNamespace("random")
+	results, _ := u.Service.HGetRelease()
 	assert.Nil(t, results)
 }
 
 func TestHCreateReleaseRequestError(t *testing.T) {
-	chart := kubes.ChartBody{}
+	chart := models.ChartBody{}
 	chart.Namespace = faker.Word()
 	chart.ReleaseName = faker.Word()
 	chart.ChartPath = faker.Word()
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
@@ -149,18 +152,18 @@ func TestHCreateReleaseRequestError(t *testing.T) {
 }
 
 func TestHCreateReleaseError(t *testing.T) {
-	chart := kubes.ChartBody{}
+	chart := models.ChartBody{}
 	chart.Namespace = faker.Word()
 	chart.ReleaseName = faker.Word()
 	chart.ChartPath = "https://charts.bitnami.com/bitnami/keycloak-13.0.2.tgz"
-	u := kubes.NewKubeRequest(lib.Logger{})
-	release, err := u.HCreateRelease(chart)
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	release, err := u.Service.HCreateRelease(chart)
 	assert.NotNil(t, err)
 	assert.Nil(t, release)
-	client := action.NewUninstall(u.ActionConfiguration)
+	client := action.NewUninstall(u.Service.Repository.ActionConfiguration)
 	client.Run(chart.ReleaseName)
 	chart.ChartPath = faker.Word()
-	release, err = u.HCreateRelease(chart)
+	release, err = u.Service.HCreateRelease(chart)
 	assert.NotNil(t, err)
 	assert.Nil(t, release)
 }
@@ -169,8 +172,8 @@ func TestHGetReleaseRequestError(t *testing.T) {
 	w := httptest.NewRecorder()
 	_, router := gin.CreateTestContext(w)
 	gin.SetMode(gin.TestMode)
-	k := kubes.NewKubeRequest(lib.Logger{})
-	k.Settings.SetNamespace("random")
+	k := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	k.Service.Repository.Settings.SetNamespace("random")
 	router.GET("/", k.HGetReleaseRequest)
 	req := httptest.NewRequest("GET", "/", nil)
 	resp := httptest.NewRecorder()
@@ -182,8 +185,8 @@ func TestGetPodInfoRequestError(t *testing.T) {
 	w := httptest.NewRecorder()
 	_, router := gin.CreateTestContext(w)
 	gin.SetMode(gin.TestMode)
-	k := kubes.NewKubeRequest(lib.Logger{})
-	router.GET("/:namespace", k.GetNodeInfoRequest)
+	k := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	router.GET("/:namespace", k.GetPodList)
 	req := httptest.NewRequest("GET", "/nil", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
@@ -192,7 +195,7 @@ func TestGetPodInfoRequestError(t *testing.T) {
 
 func TestDeletePodRequestError(t *testing.T) {
 	Podname := faker.Word()
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
@@ -204,8 +207,8 @@ func TestDeletePodRequestError(t *testing.T) {
 
 func TestGetCurrentPodStatusError(t *testing.T) {
 	podname := faker.Word()
-	u := kubes.NewKubeRequest(lib.Logger{})
-	err := u.GetCurrentPodStatusRequest(podname)
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	err := u.Service.GetCurrentPodStatusRequest(podname)
 	assert.Nil(t, err)
 }
 
@@ -213,7 +216,7 @@ func TestCreatePodRequestError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreatePodRequest)
 	ctx.Request = httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
 	r.ServeHTTP(w, ctx.Request)
@@ -224,7 +227,7 @@ func TestCreateNodePortRequestError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreateNodePortRequest)
 	ctx.Request = httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
 	r.ServeHTTP(w, ctx.Request)
@@ -235,12 +238,12 @@ func TestCreateConfigmapRequestError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreateOrUpdateConfigMapRequest)
 	ctx.Request = httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	configmap := kubes.ConfigMapBody{}
+	configmap := models.ConfigMapBody{}
 	err := faker.FakeData(&configmap.Data)
 	if err != nil {
 		panic(err.Error())
@@ -260,13 +263,13 @@ func TestCreateSecretRequestError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreateOrUpdateSecretRequest)
 	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-	secret := kubes.SecretBody{}
+	secret := models.SecretBody{}
 	secret.Name = faker.Word()
 	secret.Namespace = faker.Word()
 	jsonbytes, err := json.Marshal(secret)
@@ -282,7 +285,7 @@ func TestCreateNamespaceRequestError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 
 	r.POST("/", u.CreateNamespaceRequest)
 	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte("default")))
@@ -294,13 +297,13 @@ func TestCreateNamespaceRequestError(t *testing.T) {
 }
 
 func TestCreatePVRequestError(t *testing.T) {
-	pvbody := kubes.PV{}
+	pvbody := models.PV{}
 	pvbody.Name = faker.Name()
 	pvbody.Storage = "1Gi"
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreatePersistentVolumeRequest)
 	jsonbytes, err := json.Marshal(pvbody)
 	if err != nil {
@@ -312,12 +315,12 @@ func TestCreatePVRequestError(t *testing.T) {
 }
 
 func TestCreatePVCRequestError(t *testing.T) {
-	pvc := kubes.PVC{}
+	pvc := models.PVC{}
 	pvc.Storage = "1Gi"
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreatePersistentVolumeClaimRequest)
 	jsonbytes, err := json.Marshal(pvc)
 	if err != nil {
@@ -332,13 +335,13 @@ func TestHelmCreateRepoRequestError(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.HCreateRepoRequest)
 	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(faker.Word())))
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 
-	repobody := kubes.RepositoryBody{}
+	repobody := models.RepositoryBody{}
 	repobody.Name = faker.Word()
 	repobody.Url = faker.URL()
 	jsonbytes, err := json.Marshal(repobody)
@@ -351,13 +354,13 @@ func TestHelmCreateRepoRequestError(t *testing.T) {
 }
 
 func TestCreateServiceAccountRequestError(t *testing.T) {
-	servacc := kubes.ServiceAccount{
+	servacc := models.ServiceAccount{
 		Name:            ReqTest.ServiceAccountName,
 		Namespace:       faker.Word(),
 		SecretNamespace: "default",
 		SecretName:      ReqTest.SecretName,
 	}
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
@@ -375,8 +378,8 @@ func TestCreateServiceAccountRequestError(t *testing.T) {
 }
 
 func TestCreateRoleRequestError(t *testing.T) {
-	u := kubes.NewKubeRequest(lib.Logger{})
-	rolebody := kubes.Role{
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	rolebody := models.Role{
 		Name:      ReqTest.RoleName,
 		Namespace: faker.Word(),
 		Verbs: []string{
@@ -404,8 +407,8 @@ func TestCreateRoleRequestError(t *testing.T) {
 }
 
 func TestCreateRoleBindingRequestError(t *testing.T) {
-	u := kubes.NewKubeRequest(lib.Logger{})
-	rolebindingbody := kubes.RoleBinding{
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	rolebindingbody := models.RoleBinding{
 		Name:        ReqTest.RoleBindingName,
 		Namespace:   faker.Word(),
 		AccountName: ReqTest.ServiceAccountName,

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"io/ioutil"
 	"main/lib"
 	"main/models"
@@ -9,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -36,22 +36,19 @@ func NewTestController(TestService services.TestService, logger lib.Logger) Test
 // @Produce json
 // @Security ApiKeyAuth
 // @Router /api/test/{id} [get]
-func (u TestController) GetOneTest(c *gin.Context) {
+func (u TestController) GetOneWorkspace(c *gin.Context) {
 	paramID := c.Param("id")
 
 	objID, err := primitive.ObjectIDFromHex(paramID)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
-	Test, err := u.service.GetOneTest(objID)
+	Test, err := u.service.GetOneWorkspace(objID)
 
 	if err != nil {
-		u.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
+		c.JSON(http.StatusInternalServerError, err)
 	}
 
 	c.JSON(200, Test)
@@ -64,28 +61,11 @@ func (u TestController) GetOneTest(c *gin.Context) {
 // @Accept */*
 // @Security ApiKeyAuth
 // @Router /api/test [get]
-func (u TestController) GetTest(c *gin.Context) {
-	Tests, err := u.service.GetAllTest()
-	if err != nil {
-		u.logger.Error(err)
+func (u TestController) GetWorkspaces(c *gin.Context) {
+	Tests, err := u.service.GetAllWorkspaces()
+	if err != nil || Tests == nil {
+		c.JSON(http.StatusNotFound, err)
 	}
-	c.JSON(200, Tests)
-}
-
-// @Summary Get all test fields
-// @Tags get all test fields
-// @Description Get all test fields
-// @Param field_name path string true "Field"
-// @Produce json
-// @Security ApiKeyAuth
-// @Router /api/test [get]
-func (u TestController) GetTestField(c *gin.Context) {
-	field_name := c.Param("field_name")
-	Tests, err := u.service.GetAllTestField(field_name)
-	if err != nil {
-		u.logger.Error(err)
-	}
-
 	c.JSON(200, Tests)
 }
 
@@ -97,31 +77,48 @@ func (u TestController) GetTestField(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Param input body string true "test data"
 // @Router /api/test [post]
-func (u TestController) CreateTest(c *gin.Context) {
-	Test := models.Test{}
+func (u TestController) CreateWorkspace(c *gin.Context) {
+	Workspace := models.Workspace{}
 	//trxHandle := c.MustGet(constants.DBTransaction).(*gorm.DB)
 
-	if err := c.ShouldBindJSON(&Test); err != nil {
-		u.logger.Error(err)
+	if err := c.ShouldBindJSON(&Workspace); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	id, err := u.service.CreateWorkspace(Workspace)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	Test.CreatedAt = time.Now()
-	Test.UpdatedAt = time.Now()
-	Test.ID = primitive.NewObjectID()
+	c.JSON(200, gin.H{
+		"workspace_id": id,
+	})
+}
 
-	if err := u.service.CreateTest(Test); err != nil {
-		u.logger.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
+func (u TestController) ValidateCardLabel(n models.Node) error {
+	allowedNames := []string{
+		"PV",
+		"VM",
+		"pod",
+		"ingress",
+		"service",
+		"storage",
+		"claim",
+		"endpoints",
+		"PVC",
+		"rules",
 	}
-
-	c.JSON(200, "Test created")
+	for _, label := range allowedNames {
+		if strings.EqualFold(n.CardLabel, label) {
+			return nil
+		}
+	}
+	return errors.New("invalid CardLabel")
 }
 
 // @Summary Update test
@@ -133,36 +130,59 @@ func (u TestController) CreateTest(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Param input body string true "test data"
 // @Router /api/test/{id} [post]
-func (u TestController) UpdateTest(c *gin.Context) {
-
+func (u TestController) AddNode(c *gin.Context) {
 	paramID := c.Param("id")
 
 	objID, err := primitive.ObjectIDFromHex(paramID)
 	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
 		return
 	}
 
-	Test, _ := u.service.GetOneTest(objID)
-
-	if err := c.ShouldBindJSON(&Test); err != nil {
-		u.logger.Error(err)
+	Node := models.Node{}
+	if err := c.ShouldBindJSON(&Node); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	if err := u.ValidateCardLabel(Node); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := u.service.AddNode(Node, objID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	Test.UpdatedAt = time.Now()
+	c.JSON(200, "Workspace updated")
+}
 
-	if err := u.service.UpdateTest(Test); err != nil {
-		u.logger.Error(err)
+func (u TestController) AddEdge(c *gin.Context) {
+	paramID := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(paramID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+		return
+	}
+	Edge := models.Edge{}
+	if err := c.ShouldBindJSON(&Edge); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	if err := u.service.AddEdge(Edge, objID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	c.JSON(200, "Test updated")
+	c.JSON(200, "Workspace updated")
+
 }
 
 // @Summary delete test
@@ -173,11 +193,14 @@ func (u TestController) UpdateTest(c *gin.Context) {
 // @Produce json
 // @Security ApiKeyAuth
 // @Router /api/test/{id} [delete]
-func (u TestController) DeleteTest(c *gin.Context) {
+func (u TestController) DeleteWorkspace(c *gin.Context) {
 	paramID := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(paramID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+	}
 
-	if err := u.service.DeleteTest(paramID); err != nil {
-		u.logger.Error(err)
+	if err := u.service.DeleteWorkspace(objID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -185,6 +208,53 @@ func (u TestController) DeleteTest(c *gin.Context) {
 	}
 
 	c.JSON(200, "Test deleted")
+}
+
+func (u TestController) DeleteNode(c *gin.Context) {
+	workspace_id := c.Param("id")
+	node_id := c.Param("node_id")
+	objID, err := primitive.ObjectIDFromHex(workspace_id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+	}
+
+	if err := u.service.DeleteNode(objID, node_id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(200, "Node deleted")
+}
+
+func (u TestController) UpdateNode(c *gin.Context) {
+	Node := models.Node{}
+	workspace_id := c.Param("id")
+	objID, err := primitive.ObjectIDFromHex(workspace_id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, err)
+	}
+	if err := c.ShouldBindJSON(&Node); err != nil {
+
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if err := u.ValidateCardLabel(Node); err != nil {
+		c.JSON(http.StatusInternalServerError, err.Error())
+		return
+	}
+	if err := u.service.UpdateNode(objID, Node); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	c.JSON(200, "node updated")
+
 }
 
 func (u TestController) GetCode(c *gin.Context) {
@@ -199,13 +269,11 @@ func (u TestController) GetCode(c *gin.Context) {
 	}
 	resp, err := http.PostForm(Url, url_form)
 	if err != nil {
-		u.logger.Error(err)
 		c.String(500, err.Error())
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		u.logger.Error(err)
 		c.String(500, err.Error())
 	}
 	resp.Body.Close()

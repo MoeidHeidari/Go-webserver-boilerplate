@@ -2,7 +2,6 @@ package lib
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,10 +21,12 @@ func NewDatabase(env Env, logger Logger) Database {
 	//host := env.DBHost
 	//port := env.DBPort
 	dbname := env.DBName
+	dbcollection := env.DBCollection
+	dbUrl := env.DbUrl
 
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
-		ApplyURI(os.Getenv("MONGO_URL")).
+		ApplyURI(dbUrl).
 		SetServerAPIOptions(serverAPIOptions)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -34,8 +35,8 @@ func NewDatabase(env Env, logger Logger) Database {
 		logger.Fatal(err)
 	}
 
-	datab := client.Database("test")
-	collection := datab.Collection(dbname)
+	datab := client.Database(dbname)
+	collection := datab.Collection(dbcollection)
 
 	if err == mongo.ErrNoDocuments {
 		logger.Info("No document was found")

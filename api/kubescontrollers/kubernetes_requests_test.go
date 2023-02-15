@@ -1,12 +1,15 @@
-package kubes_test
+package kubescontrollers_test
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"log"
-	"main/api/kubes"
+	"main/api/kubescontrollers"
 	"main/lib"
+	"main/models"
+	"main/repository"
+	"main/services"
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
@@ -19,6 +22,20 @@ import (
 	"helm.sh/helm/v3/pkg/action"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+type test struct {
+	ConfigmapName      string
+	SecretName         string
+	Namespace          string
+	NodeportName       string
+	PodName            string
+	PVName             string
+	PVCName            string
+	ChartName          string
+	RoleName           string
+	RoleBindingName    string
+	ServiceAccountName string
+}
 
 var ReqTest = test{
 	ConfigmapName:      faker.Word(),
@@ -35,74 +52,74 @@ var ReqTest = test{
 }
 
 func DeleteAllReq() {
-	u := kubes.NewKubeRequest(lib.Logger{})
-	err := u.Clientset.CoreV1().Pods("default").Delete(context.TODO(), ReqTest.PodName, metav1.DeleteOptions{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	err := u.Service.Repository.Clientset.CoreV1().Pods("default").Delete(context.TODO(), ReqTest.PodName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = u.Clientset.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), ReqTest.PVCName, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), ReqTest.PVCName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = u.Clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), ReqTest.PVName, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), ReqTest.PVName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = u.Clientset.CoreV1().Services("default").Delete(context.Background(), ReqTest.NodeportName, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.CoreV1().Services("default").Delete(context.Background(), ReqTest.NodeportName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = u.Clientset.CoreV1().Secrets("default").Delete(context.Background(), ReqTest.SecretName, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.CoreV1().Secrets("default").Delete(context.Background(), ReqTest.SecretName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = u.Clientset.CoreV1().Namespaces().Delete(context.Background(), ReqTest.Namespace, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.CoreV1().Namespaces().Delete(context.Background(), ReqTest.Namespace, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = u.Clientset.CoreV1().ConfigMaps("default").Delete(context.Background(), ReqTest.ConfigmapName, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.CoreV1().ConfigMaps("default").Delete(context.Background(), ReqTest.ConfigmapName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = u.Clientset.RbacV1().Roles("default").Delete(context.Background(), ReqTest.RoleName, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.RbacV1().Roles("default").Delete(context.Background(), ReqTest.RoleName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = u.Clientset.RbacV1().RoleBindings("default").Delete(context.Background(), ReqTest.RoleBindingName, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.RbacV1().RoleBindings("default").Delete(context.Background(), ReqTest.RoleBindingName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = u.Clientset.CoreV1().ServiceAccounts("default").Delete(context.Background(), ReqTest.ServiceAccountName, metav1.DeleteOptions{})
+	err = u.Service.Repository.Clientset.CoreV1().ServiceAccounts("default").Delete(context.Background(), ReqTest.ServiceAccountName, metav1.DeleteOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	pvlist, err := u.Clientset.CoreV1().PersistentVolumes().List(context.Background(), metav1.ListOptions{})
+	pvlist, err := u.Service.Repository.Clientset.CoreV1().PersistentVolumes().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
 	for _, i := range pvlist.Items {
 		if i.Spec.ClaimRef.Name == ("data-" + ReqTest.ChartName + "-postgresql-0") {
-			err = u.Clientset.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), i.Spec.ClaimRef.Name, metav1.DeleteOptions{})
+			err = u.Service.Repository.Clientset.CoreV1().PersistentVolumeClaims("default").Delete(context.TODO(), i.Spec.ClaimRef.Name, metav1.DeleteOptions{})
 			if err != nil {
 				panic(err.Error())
 			}
-			err = u.Clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), i.Name, metav1.DeleteOptions{})
+			err = u.Service.Repository.Clientset.CoreV1().PersistentVolumes().Delete(context.TODO(), i.Name, metav1.DeleteOptions{})
 			if err != nil {
 				panic(err.Error())
 			}
 
 		}
 	}
-	u.ActionConfiguration.Init(u.Settings.RESTClientGetter(), u.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
-	client := action.NewUninstall(u.ActionConfiguration)
+	u.Service.Repository.ActionConfiguration.Init(u.Service.Repository.Settings.RESTClientGetter(), u.Service.Repository.Settings.Namespace(), os.Getenv("HELM_DRIVER"), log.Printf)
+	client := action.NewUninstall(u.Service.Repository.ActionConfiguration)
 	client.DisableHooks = true
 	client.Run(ReqTest.ChartName)
 }
 func TestGetPodInfo(t *testing.T) {
 	router := gin.Default()
 	gin.SetMode(gin.TestMode)
-	k := kubes.NewKubeRequest(lib.Logger{})
-	router.GET("/:namespace", k.GetNodeInfoRequest)
+	k := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	router.GET("/:namespace", k.GetPodList)
 	req, _ := http.NewRequest("GET", "/default", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
@@ -110,7 +127,7 @@ func TestGetPodInfo(t *testing.T) {
 }
 
 func TestDeletePod(t *testing.T) {
-	var podBody kubes.PodBody
+	var podBody models.PodBody
 	podBody.Name = faker.Word()
 	podBody.Namespace = "default"
 	podBody.ClaimName = faker.Word()
@@ -121,8 +138,8 @@ func TestDeletePod(t *testing.T) {
 	podBody.Port = int32(rand.Intn(30000-20000) + 20000)
 	podBody.MountPath = faker.URL()
 	podBody.ConfigmapName = faker.Word()
-	u := kubes.NewKubeRequest(lib.Logger{})
-	pod, err := u.CreatePod(podBody)
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	pod, err := u.Service.CreatePod(podBody)
 	assert.Nil(t, err)
 	assert.NotNil(t, pod)
 	gin.SetMode(gin.TestMode)
@@ -138,9 +155,9 @@ func TestCreatePodRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreatePodRequest)
-	podBody := kubes.PodBody{}
+	podBody := models.PodBody{}
 	faker.FakeData(&podBody)
 	podBody.Name = ReqTest.PodName
 	podBody.Namespace = "default"
@@ -163,12 +180,12 @@ func TestCreatePodRequest(t *testing.T) {
 
 func TestCreateConfigmapRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	configmap := kubes.ConfigMapBody{}
+	configmap := models.ConfigMapBody{}
 	configmap.Name = ReqTest.ConfigmapName
 	configmap.Namespace = "default"
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreateOrUpdateConfigMapRequest)
 	jsonbytes, err := json.Marshal(configmap)
 	if err != nil {
@@ -181,12 +198,12 @@ func TestCreateConfigmapRequest(t *testing.T) {
 
 func TestCreateSecretRequestTest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	secret := kubes.SecretBody{}
+	secret := models.SecretBody{}
 	secret.Name = ReqTest.SecretName
 	secret.Namespace = "default"
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreateOrUpdateSecretRequest)
 	jsonbytes, err := json.Marshal(secret)
 	if err != nil {
@@ -201,7 +218,7 @@ func TestCreateNamespaceRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 
 	r.POST("/", u.CreateNamespaceRequest)
 	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer([]byte(ReqTest.Namespace)))
@@ -210,14 +227,14 @@ func TestCreateNamespaceRequest(t *testing.T) {
 }
 
 func TestCreatePVRequest(t *testing.T) {
-	pv := kubes.PV{}
+	pv := models.PV{}
 	pv.Name = ReqTest.PVName
 	pv.Path = faker.Word()
 	pv.Storage = "1Gi"
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreatePersistentVolumeRequest)
 	jsonbytes, err := json.Marshal(pv)
 	if err != nil {
@@ -229,14 +246,14 @@ func TestCreatePVRequest(t *testing.T) {
 }
 
 func TestCreatePVCRequest(t *testing.T) {
-	pvc := kubes.PVC{}
+	pvc := models.PVC{}
 	pvc.Name = ReqTest.PVCName
 	pvc.Namespace = "default"
 	pvc.Storage = "1Gi"
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreatePersistentVolumeClaimRequest)
 	jsonbytes, err := json.Marshal(pvc)
 	if err != nil {
@@ -248,7 +265,7 @@ func TestCreatePVCRequest(t *testing.T) {
 }
 
 func TestCreateNodePortRequest(t *testing.T) {
-	nodeport := kubes.Nodeport{}
+	nodeport := models.Nodeport{}
 	nodeport.Name = ReqTest.NodeportName
 	nodeport.Namespace = "default"
 	nodeport.RedirectPort = int32(rand.Intn(32767-30000) + 30000)
@@ -256,7 +273,7 @@ func TestCreateNodePortRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	r.POST("/", u.CreateNodePortRequest)
 	jsonbytes, err := json.Marshal(nodeport)
 	if err != nil {
@@ -268,11 +285,11 @@ func TestCreateNodePortRequest(t *testing.T) {
 }
 
 func TestHCreateReleaseRequest(t *testing.T) {
-	chart := kubes.ChartBody{}
+	chart := models.ChartBody{}
 	chart.Namespace = "default"
 	chart.ReleaseName = ReqTest.ChartName
 	chart.ChartPath = "https://charts.bitnami.com/bitnami/keycloak-13.0.2.tgz"
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
@@ -289,7 +306,7 @@ func TestHCreateReleaseRequest(t *testing.T) {
 func TestHGetReleaseRequest(t *testing.T) {
 	router := gin.Default()
 	gin.SetMode(gin.TestMode)
-	k := kubes.NewKubeRequest(lib.Logger{})
+	k := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	router.GET("/", k.HGetReleaseRequest)
 	req := httptest.NewRequest("GET", "/", nil)
 	resp := httptest.NewRecorder()
@@ -298,8 +315,8 @@ func TestHGetReleaseRequest(t *testing.T) {
 }
 
 func TestHCreateRepoRequest(t *testing.T) {
-	u := kubes.NewKubeRequest(lib.Logger{})
-	repobody := kubes.RepositoryBody{}
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	repobody := models.RepositoryBody{}
 	repobody.Name = faker.Word()
 	repobody.Url = "https://charts.helm.sh/stable"
 	gin.SetMode(gin.TestMode)
@@ -316,13 +333,13 @@ func TestHCreateRepoRequest(t *testing.T) {
 }
 
 func TestCreateServiceAccountRequest(t *testing.T) {
-	servacc := kubes.ServiceAccount{
+	servacc := models.ServiceAccount{
 		Name:            ReqTest.ServiceAccountName,
 		Namespace:       "default",
 		SecretNamespace: "default",
 		SecretName:      ReqTest.SecretName,
 	}
-	u := kubes.NewKubeRequest(lib.Logger{})
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
 	ctx, r := gin.CreateTestContext(w)
@@ -337,8 +354,8 @@ func TestCreateServiceAccountRequest(t *testing.T) {
 }
 
 func TestCreateRoleRequest(t *testing.T) {
-	u := kubes.NewKubeRequest(lib.Logger{})
-	rolebody := kubes.Role{
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	rolebody := models.Role{
 		Name:      ReqTest.RoleName,
 		Namespace: "default",
 		Verbs: []string{
@@ -362,8 +379,8 @@ func TestCreateRoleRequest(t *testing.T) {
 }
 
 func TestCreateRoleBindingRequest(t *testing.T) {
-	u := kubes.NewKubeRequest(lib.Logger{})
-	rolebindingbody := kubes.RoleBinding{
+	u := kubescontrollers.NewKubeController(services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{})), lib.Logger{})
+	rolebindingbody := models.RoleBinding{
 		Name:        ReqTest.RoleBindingName,
 		Namespace:   "default",
 		AccountName: ReqTest.ServiceAccountName,
@@ -380,4 +397,9 @@ func TestCreateRoleBindingRequest(t *testing.T) {
 	ctx.Request, _ = http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(jsonbytes))
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestMain(m *testing.M) {
+	m.Run()
+	DeleteAllReq()
 }
