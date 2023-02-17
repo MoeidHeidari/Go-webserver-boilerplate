@@ -20,6 +20,7 @@ type Env struct {
 	DBName       string `mapstructure:"DB_NAME"`
 	JWTSecret    string `mapstructure:"JWT_SECRET"`
 	DBCollection string `mapstructure:"DB_COLLECTION"`
+	DBTrash      string `mapstructure:"DB_TRASH_COLLECTION"`
 	DbUrl        string `mapstructure:"MONGO_URL"`
 }
 

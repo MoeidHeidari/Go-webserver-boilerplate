@@ -82,7 +82,7 @@ func TestCreateWorkspace(t *testing.T) {
 func TestAddNode(t *testing.T) {
 	node := models.Node{
 		CpuNumber:     2,
-		MemoryNumber:  2,
+		MemoryNumber:  8,
 		StorageNumber: 20,
 		Position: models.Coordinates{
 			X: 20,
@@ -141,7 +141,7 @@ func TestUpdateNode(t *testing.T) {
 	node := models.Node{
 		ID:            "1",
 		CpuNumber:     4,
-		MemoryNumber:  5,
+		MemoryNumber:  8,
 		StorageNumber: 12,
 		Position: models.Coordinates{
 			X: 200,
@@ -206,17 +206,6 @@ func TestGetWorkspaces(t *testing.T) {
 	ctx.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
 	r.ServeHTTP(w, ctx.Request)
 	assert.Equal(t, http.StatusOK, w.Code)
-}
-
-func TestValidateCardLabel(t *testing.T) {
-	s := models.Node{
-		CardLabel: faker.Word(),
-	}
-	err := Test.Testcontroller.ValidateCardLabel(s)
-	assert.NotNil(t, err)
-	s.CardLabel = "PV"
-	err = Test.Testcontroller.ValidateCardLabel(s)
-	assert.Nil(t, err)
 }
 
 func TestDeleteNode(t *testing.T) {

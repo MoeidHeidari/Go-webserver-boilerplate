@@ -30,6 +30,7 @@ func (s TestRoutes) Setup() {
 		api.GET("/workspace/:id", s.TestController.GetOneWorkspace)
 		api.GET("/kube_get/:namespace", s.kubescontroller.GetPodList)
 		api.GET("/helm_get", s.kubescontroller.HGetReleaseRequest)
+		api.GET("/workspace/trash", s.TestController.GetDeletedWorkspaces)
 		api.POST("/workspace_create", s.TestController.CreateWorkspace)
 		api.POST("/workspace/:id/add_edge", s.TestController.AddEdge)
 		api.POST("/workspace/:id/add_node", s.TestController.AddNode)

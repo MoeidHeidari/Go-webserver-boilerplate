@@ -7,7 +7,9 @@ import (
 	"main/models"
 	"main/repository"
 	"strconv"
+	"strings"
 
+	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -31,28 +33,125 @@ func (s TestService) GetOneWorkspace(id primitive.ObjectID) (result models.Works
 	filter := bson.D{{Key: "_id", Value: id}}
 	err = s.repository.Database.Collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
-		s.logger.Fatal(err)
+		return result, err
 	}
 	return result, err
 }
 
+func (s TestService) GetDeletedWorkspaces() ([]models.Workspaces, error) {
+	filter := bson.D{{}}
+	curr, err := s.repository.Trash.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+	var Tests []models.Workspace
+	if err = curr.All(context.TODO(), &Tests); err != nil {
+		return nil, err
+	}
+	deleted := make([]models.Workspaces, len(Tests))
+	for i, test := range Tests {
+		deleted[i].ID = test.ID
+		deleted[i].Name = test.Name
+		if test.Status {
+			deleted[i].Status = "online"
+		} else {
+			deleted[i].Status = "offline"
+		}
+	}
+	return deleted, err
+}
+
 // GetAllTest get all the Test
-func (s TestService) GetAllWorkspaces() (Tests []models.Workspace, err error) {
+func (s TestService) GetAllWorkspaces() ([]models.Workspaces, error) {
 	filter := bson.D{{}}
 	curr, err := s.repository.Collection.Find(context.TODO(), filter)
 	if err != nil {
 		return nil, err
 	}
+	var Tests []models.Workspace
 	if err = curr.All(context.TODO(), &Tests); err != nil {
 		return nil, err
 	}
+	response := make([]models.Workspaces, len(Tests))
+	for i, test := range Tests {
+		response[i].ID = test.ID
+		response[i].Name = test.Name
+		if test.Status {
+			response[i].Status = "online"
+		} else {
+			response[i].Status = "offline"
+		}
+	}
+	return response, err
+}
 
-	return Tests, err
+func (u TestService) ValidateCardLabel(cardLabel string) error {
+	allowedNames := []string{
+		"PV",
+		"VM",
+		"pod",
+		"ingress",
+		"service",
+		"storage",
+		"claim",
+		"endpoints",
+		"nodejs",
+		"PVC",
+		"rules",
+	}
+	for _, label := range allowedNames {
+		if strings.EqualFold(cardLabel, label) {
+			return nil
+		}
+	}
+	return errors.New("invalid CardLabel")
+}
+
+func (u TestService) ValidateCpuNumber(n int) error {
+	if 1 <= n && n <= 16 {
+		return nil
+	}
+	return errors.New("CpuNumber must be between 1 and 16")
+}
+
+func (u TestService) ValidateMemoryNumber(n int) error {
+	if 8 <= n && n <= 64 {
+		return nil
+	}
+	return errors.New("MemoryNumber must be between 8 and 64")
+}
+
+func (u TestService) ValidateStorageNumber(n int) error {
+	if 8 <= n && n <= 64 {
+		return nil
+	}
+	return errors.New("StorageNumber must be between 8 and 64")
+}
+
+func (u TestService) ValidateNode(n models.Node) error {
+	err := u.ValidateCardLabel(n.CardLabel)
+	if err != nil {
+		return err
+	}
+	err = u.ValidateCpuNumber(n.CpuNumber)
+	if err != nil {
+		return err
+	}
+	err = u.ValidateMemoryNumber(n.MemoryNumber)
+	if err != nil {
+		return err
+	}
+	err = u.ValidateStorageNumber(n.StorageNumber)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // CreateTest call to create the Test
 func (s TestService) CreateWorkspace(Workspace models.Workspace) (primitive.ObjectID, error) {
 	Workspace.ID = primitive.NewObjectID()
+	Workspace.Status = true
 	_, err := s.repository.Collection.InsertOne(context.TODO(), Workspace)
 	return Workspace.ID, err
 }
@@ -95,7 +194,20 @@ func (s TestService) AddEdge(Edge models.Edge, id primitive.ObjectID) error {
 // DeleteTest deletes the Test
 func (s TestService) DeleteWorkspace(id primitive.ObjectID) error {
 	filter := bson.D{{Key: "_id", Value: id}}
-	_, err := s.repository.Collection.DeleteOne(context.TODO(), filter)
+	var workspace models.Workspace
+	err := s.repository.Collection.FindOne(context.TODO(), filter).Decode(&workspace)
+	if err != nil {
+		return err
+	}
+	_, err = s.repository.Collection.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		return err
+	}
+	workspace.Status = false
+	_, err = s.repository.Trash.InsertOne(context.TODO(), workspace)
+	if err != nil {
+		return err
+	}
 	return err
 }
 

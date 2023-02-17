@@ -311,6 +311,11 @@ func TestCreateRoleBinding(t *testing.T) {
 	assert.NotNil(t, rolebinding)
 }
 
+func TestCreateCRD(t *testing.T) {
+	u := services.NewKubernetesService(lib.Logger{}, repository.NewKubernetesRepository(lib.NewKubernetesClient(lib.Logger{}), lib.Logger{}))
+	u.CreateCRD()
+}
+
 func TestMain(m *testing.M) {
 	m.Run()
 	DeleteAll()

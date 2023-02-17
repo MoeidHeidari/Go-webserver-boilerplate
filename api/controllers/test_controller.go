@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"io/ioutil"
 	"main/lib"
 	"main/models"
@@ -51,7 +50,10 @@ func (u TestController) GetOneWorkspace(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, err)
 	}
 
-	c.JSON(200, Test)
+	c.JSON(200, gin.H{
+		"nodes": Test.Node,
+		"edges": Test.Edges,
+	})
 
 }
 
@@ -66,7 +68,17 @@ func (u TestController) GetWorkspaces(c *gin.Context) {
 	if err != nil || Tests == nil {
 		c.JSON(http.StatusNotFound, err)
 	}
+
 	c.JSON(200, Tests)
+
+}
+
+func (u TestController) GetDeletedWorkspaces(c *gin.Context) {
+	Deleted, err := u.service.GetDeletedWorkspaces()
+	if err != nil {
+		c.JSON(http.StatusNotFound, err)
+	}
+	c.JSON(200, Deleted)
 }
 
 // @Summary Create GetTests
@@ -100,27 +112,6 @@ func (u TestController) CreateWorkspace(c *gin.Context) {
 	})
 }
 
-func (u TestController) ValidateCardLabel(n models.Node) error {
-	allowedNames := []string{
-		"PV",
-		"VM",
-		"pod",
-		"ingress",
-		"service",
-		"storage",
-		"claim",
-		"endpoints",
-		"PVC",
-		"rules",
-	}
-	for _, label := range allowedNames {
-		if strings.EqualFold(n.CardLabel, label) {
-			return nil
-		}
-	}
-	return errors.New("invalid CardLabel")
-}
-
 // @Summary Update test
 // @Tags update test
 // @Description Update an old test
@@ -146,7 +137,7 @@ func (u TestController) AddNode(c *gin.Context) {
 		})
 		return
 	}
-	if err := u.ValidateCardLabel(Node); err != nil {
+	if err := u.service.ValidateNode(Node); err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -243,7 +234,7 @@ func (u TestController) UpdateNode(c *gin.Context) {
 		return
 	}
 
-	if err := u.ValidateCardLabel(Node); err != nil {
+	if err := u.service.ValidateNode(Node); err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 		return
 	}

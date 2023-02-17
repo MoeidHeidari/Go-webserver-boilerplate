@@ -17,15 +17,22 @@ type Node struct {
 	StorageNumber int         `bson:"storageNumber" json:"storage_number"`
 	Position      Coordinates `bson:"position" json:"position"`
 	NodeName      string      `bson:"name" json:"name"`
-	CardLabel     string      `bson:"CardLabel" json:"card_label"`
+	CardLabel     string      `bson:"cardLabel" json:"card_label"`
 	LabelColor    string      `bson:"labelColor" json:"label_color"`
 }
 
 type Workspace struct {
-	ID    primitive.ObjectID `bson:"_id" json:"id"`
-	Node  []Node             `bson:"nodes,omitempty" json:"nodes"`
-	Name  string             `bson:"name" json:"name"`
-	Edges []Edge             `bson:"edges,omitempty" json:"edges"`
+	ID     primitive.ObjectID `bson:"_id" json:"id"`
+	Node   []Node             `bson:"nodes,omitempty" json:"nodes"`
+	Name   string             `bson:"name" json:"name"`
+	Edges  []Edge             `bson:"edges,omitempty" json:"edges"`
+	Status bool               `bson:"status"`
+}
+
+type Workspaces struct {
+	ID     primitive.ObjectID `json:"id" bson:"_id"`
+	Name   string             `json:"name" bson:"name"`
+	Status string             `json:"status" bson:"status"`
 }
 
 type Edge struct {

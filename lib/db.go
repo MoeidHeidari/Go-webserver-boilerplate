@@ -11,6 +11,7 @@ import (
 // Database modal
 type Database struct {
 	Collection *mongo.Collection
+	Trash      *mongo.Collection
 }
 
 // NewDatabase creates a new database instance
@@ -22,6 +23,7 @@ func NewDatabase(env Env, logger Logger) Database {
 	//port := env.DBPort
 	dbname := env.DBName
 	dbcollection := env.DBCollection
+	dbtrashcollection := env.DBTrash
 	dbUrl := env.DbUrl
 
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
@@ -37,6 +39,7 @@ func NewDatabase(env Env, logger Logger) Database {
 
 	datab := client.Database(dbname)
 	collection := datab.Collection(dbcollection)
+	trash_collection := datab.Collection(dbtrashcollection)
 
 	if err == mongo.ErrNoDocuments {
 		logger.Info("No document was found")
@@ -47,5 +50,6 @@ func NewDatabase(env Env, logger Logger) Database {
 	logger.Info("Database connection established")
 	return Database{
 		Collection: collection,
+		Trash:      trash_collection,
 	}
 }

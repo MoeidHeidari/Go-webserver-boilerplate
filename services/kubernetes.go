@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"main/lib"
 	"main/models"
 	"main/repository"
@@ -11,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type KubernetesService struct {
@@ -23,10 +25,10 @@ func NewKubernetesService(logger lib.Logger, Repository repository.KubernetesRep
 		logger:     logger,
 		Repository: Repository,
 	}
+
 }
 
 func (u KubernetesService) CreatePod(podBody models.PodBody) (*corev1.Pod, error) {
-
 	newpod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podBody.Name,
@@ -265,11 +267,27 @@ func (u KubernetesService) GetCurrentPodStatusRequest(pod_name string) []byte {
 }
 
 func (u KubernetesService) DeletePod(name, namespace string) error {
+
 	err := u.Repository.Clientset.CoreV1().Pods(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (u KubernetesService) CreateCRD() {
+
+	vm := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "kubevirt.io/v1",
+			"kind":       "VirtualMachine",
+			"metadata": map[string]interface{}{
+				"name": "vmName",
+			},
+		},
+	}
+	err := u.Repository.Clientset.CoreV1().RESTClient().Post().Resource("virtualmachines").Namespace("default").Body(vm).Do(context.Background())
+	fmt.Println(err.Raw())
 }
 
 func (u KubernetesService) GetPodsList(namespace string) ([]string, error) {
