@@ -93,7 +93,7 @@ Response :
   
   ## Get deleted workspaces:
   **GET Request `localhost:3000/api/workspace/trash`**
-Sends all workspaces in trash cap
+Sends all workspaces in trash can
 
 response:
 ```json 
@@ -110,7 +110,7 @@ response:
 
 **GET Request `localhost:3000/api/workspace/trash`**
 
-Sends deleted workspaces, that are in trash cap
+Sends deleted workspaces, that are in trash can
 
 Response:
 
@@ -165,7 +165,7 @@ body :
 
 ## Delete workspace 
 **DELETE Request `localhost:3000/api/workspace/:id`**
-Deletes workspace from main database and sends it to trash cap
+Deletes workspace from main database and sends it to trash can
 
 
 ## Delete Node 
