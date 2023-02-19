@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"main/lib"
 	"main/models"
 	"main/repository"
@@ -13,6 +12,8 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 type KubernetesService struct {
@@ -236,8 +237,10 @@ func (u KubernetesService) CreateRoleBinding(rolebinding models.RoleBinding) (*r
 			Namespace: rolebinding.Namespace,
 		},
 		Subjects: []rbacv1.Subject{
-			{Kind: "ServiceAccount",
-				Name: rolebinding.AccountName},
+			{
+				Kind: "ServiceAccount",
+				Name: rolebinding.AccountName,
+			},
 		},
 		RoleRef: rbacv1.RoleRef{
 			Name: rolebinding.RoleName,
@@ -276,18 +279,108 @@ func (u KubernetesService) DeletePod(name, namespace string) error {
 }
 
 func (u KubernetesService) CreateCRD() {
+	c, err := client.New(config.GetConfigOrDie(), client.Options{})
+	if err != nil {
+		panic(err)
+	}
+	vm := &unstructured.Unstructured{}
+	vm.Object = map[string]interface{}{
+		"apiVersion": "kubevirt.io/v1",
+		"kind":       "VirtualMachine",
+		"metadata": map[string]interface{}{
+			"name":      "vm-example",
+			"namespace": "default",
+		},
+		"spec": map[string]interface{}{
+			"running": false,
+			"template": map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"labels": map[string]interface{}{
+						"kubevirt.io/size":   "small",
+						"kubevirt.io/domain": "testvm",
+					},
+				},
+				"spec": map[string]interface{}{
+					"domain": map[string]interface{}{
+						"cpu": map[string]interface{}{
+							"cores":   2,
+							"sockets": 1,
+							"threads": 4,
+						},
+						"devices": map[string]interface{}{
+							"disks": []map[string]interface{}{
+								{
+									"name": "containerdisk",
+									"disk": map[string]interface{}{
+										"bus": "virtio",
+									},
+								},
+								{
+									"name": "cloudinitdisk",
+									"disk": map[string]interface{}{
+										"bus": "virtio",
+									},
+								},
+							},
+							"interfaces": []map[string]interface{}{
+								{
+									"name":       "default",
+									"masquerade": map[string]interface{}{},
+								},
+							},
+						},
+						"interfaces": map[string]interface{}{
+							"name": "default",
+						},
 
-	vm := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "kubevirt.io/v1",
-			"kind":       "VirtualMachine",
-			"metadata": map[string]interface{}{
-				"name": "vmName",
+						"resources": map[string]interface{}{
+							"requests": map[string]interface{}{
+								"memory": "1G",
+							},
+						},
+					},
+					"accessCredentials": []map[string]interface{}{
+						{
+							"sshPublicKey": map[string]interface{}{
+								"source": map[string]interface{}{
+									"secret": map[string]interface{}{
+										"secretName": "my-pub-key",
+									},
+								},
+								"propagationMethod": map[string]interface{}{
+									"configDrive": map[string]interface{}{},
+								},
+							},
+						},
+					},
+					"networks": []map[string]interface{}{
+						{
+							"name": "default",
+							"pod":  map[string]interface{}{},
+						},
+					},
+					"volumes": []map[string]interface{}{
+						{
+							"name": "containerdisk",
+							"containerDisk": map[string]interface{}{
+								"image": "quay.io/kubevirt/cirros-container-disk-demo",
+							},
+						},
+						{
+							"name": "cloudinitdisk",
+							"cloudInitConfigDrive": map[string]interface{}{
+								"userData": "password:pass\nchpasswd: {expire: False}\n",
+							},
+						},
+					},
+				},
 			},
 		},
 	}
-	err := u.Repository.Clientset.CoreV1().RESTClient().Post().Resource("virtualmachines").Namespace("default").Body(vm).Do(context.Background())
-	fmt.Println(err.Raw())
+	err = c.Create(context.Background(), vm)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (u KubernetesService) GetPodsList(namespace string) ([]string, error) {
