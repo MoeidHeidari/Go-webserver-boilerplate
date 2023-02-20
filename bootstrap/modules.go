@@ -2,7 +2,7 @@ package bootstrap
 
 import (
 	"main/api/controllers"
-	"main/api/kubes"
+	"main/api/kubescontrollers"
 	"main/api/middlewares"
 	"main/api/routes"
 	"main/api/ws"
@@ -20,6 +20,6 @@ var CommonModules = fx.Options(
 	services.Module,
 	middlewares.Module,
 	repository.Module,
-	kubes.Module,
+	kubescontrollers.Module,
 	ws.Module,
 )

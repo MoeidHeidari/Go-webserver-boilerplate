@@ -26,6 +26,6 @@ func (r TestRepository) WithTrx(trxHandle *mongo.Collection) TestRepository {
 		r.logger.Error("Transaction Database not found in gin context. ")
 		return r
 	}
-	//r.Database.collection = trxHandle
+	r.Database.Collection = trxHandle
 	return r
 }

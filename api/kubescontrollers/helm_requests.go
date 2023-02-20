@@ -1,19 +1,20 @@
-package kubes
+package kubescontrollers
 
 import (
+	"main/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (u KubeRequest) HCreateReleaseRequest(c *gin.Context) {
-	body := ChartBody{}
+func (u KubeController) HCreateReleaseRequest(c *gin.Context) {
+	body := models.ChartBody{}
 
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	release, err := u.HCreateRelease(body)
+	release, err := u.Service.HCreateRelease(body)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
@@ -22,20 +23,20 @@ func (u KubeRequest) HCreateReleaseRequest(c *gin.Context) {
 	c.JSON(200, release)
 }
 
-func (u KubeRequest) HGetReleaseRequest(c *gin.Context) {
-	results, err := u.HGetRelease()
+func (u KubeController) HGetReleaseRequest(c *gin.Context) {
+	results, err := u.Service.HGetRelease()
 	if err != nil || results == nil {
 		c.JSON(http.StatusInternalServerError, err)
 	}
 	c.JSON(200, results)
 }
 
-func (u KubeRequest) HCreateRepoRequest(c *gin.Context) {
-	body := RepositoryBody{}
+func (u KubeController) HCreateRepoRequest(c *gin.Context) {
+	body := models.RepositoryBody{}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	err := u.HelmRepoAdd(body)
+	err := u.Service.HelmRepoAdd(body)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err.Error())

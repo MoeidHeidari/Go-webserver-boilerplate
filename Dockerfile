@@ -1,16 +1,22 @@
-# syntax=docker/dockerfile:1
+# Use an official Go image as the base image
+FROM golang:1.18.1
 
-FROM golang:1.16-alpine
+# Set the working directory to /app
+WORKDIR /.
 
-WORKDIR /app
+# Copy the public.key file to the container
+COPY public.key /app/public.key
 
-COPY go.mod ./
-RUN go mod download
+# Set environment variables
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:$PATH
 
+# Copy the current directory contents into the container at /app
+COPY . .
+RUN go get -d -v 
+# Expose ports 3000 and 12121
+EXPOSE 3000
+EXPOSE 12121
 
-COPY *.go ./
-RUN go get
-
-EXPOSE 4000
-
-CMD [ "go","run","main.go" ]
+# Set the command to run the Go app
+CMD ["go", "run", ".", "app:serve"]
